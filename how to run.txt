@@ -1,0 +1,41 @@
+
+1. One-time setup (Windows, with 3D viewer)
+
+
+From PowerShell:
+
+
+conda create -n mazatrol python=3.12 wxpython pythonocc-core=7.8.1 -c conda-forge
+conda activate mazatrol
+pip install -e .
+
+
+
+If you don't have conda, install Miniconda first. On Windows, pythonocc-core is much easier via conda than pip.
+
+
+GUI only (no 3D simulation):
+
+cd c:\Users\Public\Documents\mazatrol-reader-aero\mazatrol-reader-aero
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install wxPython
+pip install -e .
+
+
+
+2. Start the app
+With the environment activated and from the project folder:
+
+
+
+mazatrol-reader
+Other equivalent commands:
+
+python -m mazatrol_reader
+python main.py
+
+
+
+
+

@@ -1,0 +1,7 @@
+# Core runtime dependencies (see pyproject.toml for full metadata)
+wxPython>=4.2.2
+
+# 3D simulation — strongly recommended; use conda on Windows:
+#   conda install -c conda-forge pythonocc-core=7.8.1
+pythonocc-core>=7.8.0; platform_system != "Windows"
+# On Windows, install pythonocc-core via conda-forge instead of pip.

@@ -1,0 +1,23 @@
+---
+description: Always update semantic version and changelog after any modification
+alwaysApply: true
+---
+
+# Semantic Versioning + Changelog Policy
+
+**MANDATORY** — After completing ANY change (feature, bug fix, UI update, refactoring, etc.):
+
+### Step-by-Step Requirements:
+
+1. **Determine version bump** (Semantic Versioning):
+   - **MAJOR** (e.g., 1.0.0 → 2.0.0): Breaking changes, major UI redesign, database schema changes
+   - **MINOR** (e.g., 1.2.0 → 1.3.0): New features, significant improvements
+   - **PATCH** (e.g., 1.2.3 → 1.2.4): Bug fixes, small tweaks, UI polish
+
+2. **Update TWO files**:
+   - `C:/Users/Public/Documents/part-rfq-pro/part-rfq-pro/src/ThreeDAnalyzer.Web/Pages/Shared/_Layout.cshtml`
+   - `CHANGELOG.md` (in project root)
+
+3. **Do this as the FINAL step** before declaring the task complete.
+
+
