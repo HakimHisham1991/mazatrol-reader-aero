@@ -1,0 +1,54 @@
+@namespace MazatrolWeb.Client.Components
+
+<div class="drop-zone">
+    <label class="btn btn-primary mb-0">
+        Open Mazatrol program…
+        <InputFile OnChange="OnFileSelected"
+                   accept=".pbg,.pbf,.pbd,.pbe,.pbm,.mzk,.t6m,.m6m,.maz"
+                   class="d-none" />
+    </label>
+    <span class="text-muted ms-2 small">Supported: .PBG, .PBF, .MZK, …</span>
+    @if (!string.IsNullOrEmpty(_fileName))
+    {
+        <span class="badge bg-secondary ms-2">@_fileName</span>
+    }
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <div class="alert alert-danger mt-2 py-1 small mb-0">@_error</div>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback<(byte[] Data, string FileName)> OnFileLoaded { get; set; }
+
+    private string? _fileName;
+    private string? _error;
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _error = null;
+        var file = e.File;
+        if (file is null) return;
+
+        if (!MazatrolConstants.SupportedExtensions.Contains(Path.GetExtension(file.Name)))
+        {
+            _error = "Unsupported file type.";
+            return;
+        }
+
+        await using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        _fileName = file.Name;
+        await OnFileLoaded.InvokeAsync((ms.ToArray(), file.Name));
+    }
+}
+
+<style>
+    .drop-zone {
+        border: 2px dashed #555;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    .drop-zone.drag-over { border-color: #0d6efd; }
+</style>

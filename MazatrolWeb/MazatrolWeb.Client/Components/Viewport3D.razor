@@ -1,0 +1,93 @@
+@namespace MazatrolWeb.Client.Components
+@inject ThreeJsInterop ThreeJs
+@implements IAsyncDisposable
+
+<div class="viewport3d d-flex flex-column h-100">
+    <div class="viewport-toolbar btn-group btn-group-sm mb-2">
+        <button class="btn btn-outline-light" @onclick="RunSimulation">Play</button>
+        <button class="btn btn-outline-light" @onclick="() => ThreeJs.ViewIsoAsync()">ISO</button>
+        <button class="btn btn-outline-light" @onclick="() => ThreeJs.ViewFrontAsync()">Front</button>
+        <button class="btn btn-outline-light" @onclick="() => ThreeJs.ViewSideAsync()">Side</button>
+        <button class="btn btn-outline-light" @onclick="() => ThreeJs.ViewTopAsync()">Top</button>
+        <button class="btn btn-outline-light" @onclick="ToggleWireframe">Wireframe</button>
+        <button class="btn btn-outline-light" @onclick="Screenshot">Screenshot</button>
+        <button class="btn btn-outline-light" @onclick="ExportStl">STL</button>
+    </div>
+    <canvas @ref="_canvas" id="@CanvasId" class="viewport-canvas flex-grow-1"></canvas>
+    @if (!string.IsNullOrEmpty(_status))
+    {
+        <div class="small text-warning mt-1">@_status</div>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback<TurningSimulationInput> OnSimulate { get; set; }
+    [Parameter] public bool Wireframe { get; set; }
+    [Parameter] public EventCallback<bool> WireframeChanged { get; set; }
+
+    private ElementReference _canvas;
+    private const string CanvasId = "mazatrol-viewport";
+    private bool _initialized;
+    private string? _status;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_initialized)
+        {
+            try
+            {
+                await ThreeJs.InitializeAsync(CanvasId);
+                await ThreeJs.ResizeAsync();
+                _initialized = true;
+            }
+            catch (Exception ex)
+            {
+                _status = $"3D init failed: {ex.Message}";
+                StateHasChanged();
+            }
+        }
+    }
+
+    public async Task RenderSimulationAsync(SimulationMeshDto mesh)
+    {
+        if (!_initialized) return;
+        await ThreeJs.UpdateSimulationAsync(mesh);
+    }
+
+    private async Task RunSimulation() => await OnSimulate.InvokeAsync();
+
+    private async Task ToggleWireframe()
+    {
+        Wireframe = !Wireframe;
+        await WireframeChanged.InvokeAsync(Wireframe);
+        await ThreeJs.SetWireframeAsync(Wireframe);
+    }
+
+    private async Task Screenshot()
+    {
+        var dataUrl = await ThreeJs.TakeScreenshotAsync();
+        _status = dataUrl.Length > 0 ? "Screenshot captured (download via browser)." : "Screenshot failed.";
+    }
+
+    private Task ExportStl() => ThreeJs.ExportStlAsync().AsTask();
+
+    public async ValueTask DisposeAsync()
+    {
+        // canvas cleanup handled in JS module lifetime
+        await Task.CompletedTask;
+    }
+}
+
+<style>
+    .viewport3d {
+        min-height: 0;
+    }
+
+    .viewport-canvas {
+        width: 100%;
+        flex: 1 1 auto;
+        min-height: 0;
+        background: #1a1a2e;
+        border-radius: 6px;
+    }
+</style>

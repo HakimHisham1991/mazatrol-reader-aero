@@ -1,3 +1,3 @@
 """Mazatrol program viewer and editor for Mazak CNC lathes."""
 
-__version__ = "2.0.0"
+__version__ = "1.1.3"

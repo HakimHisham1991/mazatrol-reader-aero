@@ -1,0 +1,27 @@
+@namespace MazatrolWeb.Client.Components
+
+<div class="app-page-header mb-3 @(Centered ? "text-center" : "")">
+    <h1 class="@TitleClass">@Title</h1>
+    <div class="app-version">v@(AppInfo.Version)</div>
+    <div class="app-credit text-muted">@(AppInfo.Credit)</div>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string TitleClass { get; set; } = "h4 mb-1";
+    [Parameter] public bool Centered { get; set; }
+}
+
+<style>
+    .app-version {
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        color: #6ea8fe;
+    }
+
+    .app-credit {
+        font-size: 0.8rem;
+        margin-top: 0.15rem;
+    }
+</style>

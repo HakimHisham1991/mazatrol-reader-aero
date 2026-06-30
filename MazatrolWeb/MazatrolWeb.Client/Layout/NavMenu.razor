@@ -1,0 +1,40 @@
+﻿<aside class="sidebar nav-rail @(Expanded ? "expanded" : "collapsed")">
+    <button type="button"
+            class="nav-rail-toggle"
+            title="@(Expanded ? "Collapse menu" : "Expand menu")"
+            @onclick="ToggleExpanded">
+        <span class="bi bi-chevron-@(Expanded ? "left" : "right")-nav" aria-hidden="true"></span>
+    </button>
+
+    @if (Expanded)
+    {
+        <div class="nav-rail-brand">Mazatrol</div>
+    }
+
+    <nav class="nav flex-column nav-rail-links">
+        <div class="nav-item">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All" title="Home">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span>
+                @if (Expanded)
+                {
+                    <span class="nav-label">Home</span>
+                }
+            </NavLink>
+        </div>
+        <div class="nav-item">
+            <NavLink class="nav-link" href="viewer" title="Viewer">
+                <span class="bi bi-viewer-nav-menu" aria-hidden="true"></span>
+                @if (Expanded)
+                {
+                    <span class="nav-label">Viewer</span>
+                }
+            </NavLink>
+        </div>
+    </nav>
+</aside>
+
+@code {
+    private bool Expanded { get; set; }
+
+    private void ToggleExpanded() => Expanded = !Expanded;
+}

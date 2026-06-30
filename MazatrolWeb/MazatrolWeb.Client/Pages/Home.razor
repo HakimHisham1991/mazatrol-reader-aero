@@ -1,0 +1,44 @@
+﻿@page "/"
+
+<PageTitle>Mazatrol Web</PageTitle>
+
+<div class="hero text-center py-5">
+    <AppPageHeader Title="Mazatrol Web" TitleClass="mb-2" Centered="@true" />
+    <p class="lead text-muted">
+        Offline-first Blazor WebAssembly viewer and turning simulator for Mazak Mazatrol programs.
+    </p>
+    <a class="btn btn-primary btn-lg" href="viewer">Open Viewer</a>
+</div>
+
+<div class="row g-4 mt-2">
+    <div class="col-md-4">
+        <div class="card bg-dark border-secondary h-100">
+            <div class="card-body">
+                <h5 class="card-title">Parse &amp; Edit</h5>
+                <p class="card-text small text-muted">
+                    Load binary .PBG files, view units/figures, edit parameters, delete/duplicate/insert units.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-dark border-secondary h-100">
+            <div class="card-body">
+                <h5 class="card-title">3D Simulation</h5>
+                <p class="card-text small text-muted">
+                    Three.js lathe visualization with OrbitControls, wireframe toggle, STL export.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-dark border-secondary h-100">
+            <div class="card-body">
+                <h5 class="card-title">Fully Offline</h5>
+                <p class="card-text small text-muted">
+                    Publish to a static folder and serve with <code>dotnet serve</code> or IIS — no internet required.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

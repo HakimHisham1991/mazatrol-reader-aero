@@ -1,137 +1,271 @@
-# Mazatrol Reader
+# Mazatrol Reader / Mazatrol Web
 
-View, edit, and 3D-simulate Mazatrol programs for Mazak CNC lathe/turn machines.
+View, edit, and 3D-simulate **Mazatrol** programs for Mazak CNC lathe/turn machines.
 
-This is a modern Python 3.12+ port of the legacy monolithic `main.py`, refactored into a maintainable package with typed parsing, wxPython UI, and OpenCascade turning simulation.
+**Current version:** v1.1.3 · Developed by UPECA PDC
+
+This repository contains two applications ported from the legacy Python 2 `main.py`:
+
+| Application | Stack | Best for |
+|-------------|-------|----------|
+| **[Mazatrol Web](#mazatrol-web-blazor-wasm)** | .NET 10 Blazor WASM + Three.js | Browser, offline deploy, no conda |
+| **[Mazatrol Reader (desktop)](#mazatrol-reader-python-desktop)** | Python 3.12 + wxPython + pythonOCC | Full OpenCascade boolean simulation |
+
+Both parse binary Mazatrol files using structure definitions in `qts200m.xml`.
+
+---
 
 ## Features
 
-- Parse binary Mazatrol programs (`.PBG`, `.PBF`, `.MZK`, …) using `qts200m.xml`
-- Display units and parameters in an editable list view
-- Edit `readData` parameters in-place (binary write-back)
-- Right-click unit operations: delete, duplicate, export, insert LIN/TPR/FACING
-- Drag & drop program files onto the window
-- 3D turned-part simulation (stock cylinder + boolean cuts for BAR/FACING)
+- Parse binary Mazatrol programs (`.PBG`, `.PBF`, `.PBD`, `.MZK`, `.T6M`, …)
+- Display units and figures in a program grid (green = parameter names, yellow = values)
+- Edit `readData` parameters with binary write-back
+- Unit operations: **delete**, **duplicate**, **export**, **insert** LIN / TPR / FACING
+- 3D turned-part preview from MAT stock + BAR / FACING toolpaths
+- Camera presets: ISO, Front, Side, Top; wireframe toggle; STL export (Web)
+
+---
+
+## Supported file extensions
+
+`.pbg` `.pbf` `.pbd` `.pbe` `.pbm` `.mzk` `.t6m` `.m6m` `.maz`
+
+Sample programs (when present locally):
+
+```
+SAMPLE_NC_PROGRAM/PBG/     e.g. AXIS28X140.PBG, CONUS.PBG, VILLA.PBG
+programs/                  optional copy location for desktop app
+```
+
+---
 
 ## Project layout
 
 ```
-mazatrol_reader/          # Application package
-  config.py               # Paths and constants
-  models.py               # Dataclasses / enums
-  parser.py               # XML structure + binary parser
-  editor.py               # Unit-level binary edits
-  visualization.py        # pythonOCC turning simulation
-  gui.py                  # wxPython UI
-  __main__.py             # CLI entry point
-main.py                   # Thin launcher (backward compatible)
-qts200m.xml               # Unit/parameter structure definitions
-programs/                 # Sample .PBG files (not included in repo)
-units/                    # Insert templates: LIN.unit, TPR.unit, FACING.unit
-assets/eureka.bmp         # Optional 3D viewer background
-pyproject.toml
-requirements.txt
+mazatrol-reader-aero/
+├── README.md                    ← this file
+├── qts200m.xml                  ← unit/parameter structure (required)
+├── mcode.csv                    ← reference data (not wired in code yet)
+├── main.py                      ← legacy Python launcher
+├── pyproject.toml               ← Python package config
+├── requirements.txt
+│
+├── mazatrol_reader/             ← Python desktop app
+│   ├── parser.py                ← binary parser + XML loader
+│   ├── editor.py                ← unit-level binary edits
+│   ├── visualization.py         ← pythonOCC turning simulation
+│   ├── gui.py                   ← wxPython UI
+│   └── __main__.py              ← entry point: mazatrol-reader
+│
+├── MazatrolWeb/                 ← Blazor WebAssembly app
+│   ├── ARCHITECTURE.md          ← component / interop diagram
+│   ├── README.md                ← Web-specific notes
+│   ├── MazatrolWeb.slnx
+│   ├── scripts/download-three.ps1
+│   └── MazatrolWeb.Client/
+│       ├── Pages/Viewer.razor   ← main UI
+│       ├── Components/          ← ProgramGrid, FigureEditor, Viewport3D, …
+│       ├── Services/            ← MazatrolParser.cs, turning sim, JS interop
+│       └── wwwroot/
+│           ├── data/qts200m.xml
+│           ├── js/              ← three-scene.js, interop.js
+│           └── lib/three/       ← Three.js r168 (offline)
+│
+├── programs/                    ← place .PBG files here (desktop)
+├── units/                       ← LIN.unit, TPR.unit, FACING.unit templates
+├── assets/                      ← optional eureka.bmp background
+└── SAMPLE_NC_PROGRAM/           ← sample NC / Mazatrol exports
 ```
 
-## Requirements
+---
 
-| Component | Package | Notes |
-|-----------|---------|-------|
-| Python | 3.12+ | Required |
-| GUI | wxPython 4.2+ | `pip install wxPython` |
-| 3D | pythonocc-core 7.8+ | **Use conda-forge on Windows** |
+## Quick start — which app should I run?
 
-> **Windows note:** `pythonocc-core` is difficult to install via pip on Windows. Use Miniconda/Anaconda:
->
-> ```bash
-> conda create -n mazatrol python=3.12
-> conda activate mazatrol
-> conda install -c conda-forge pythonocc-core=7.8.1 wxpython
-> pip install -e .
-> ```
+### Mazatrol Web (recommended)
 
-## Installation
+**Requires:** [.NET 10 SDK](https://dotnet.microsoft.com/download) only (Three.js is vendored in repo).
 
-### Option A — uv (recommended for development)
-
-```bash
-cd mazatrol-reader-aero
-uv venv --python 3.12
-uv pip install -e .
-# Add OCC separately via conda if needed
+```powershell
+cd MazatrolWeb\MazatrolWeb.Client
+dotnet restore
+dotnet run
 ```
 
-### Option B — pip
+1. Open the URL from the terminal (e.g. `http://localhost:5101`)
+2. Click the **Viewer** icon in the left rail (expand the rail with the chevron if needed)
+3. **Open Mazatrol program…** and select a `.PBG` file (e.g. `SAMPLE_NC_PROGRAM\PBG\CONUS.PBG`)
+4. Click a **yellow row** in the program grid to select a unit
+5. Click **Play** in the 3D panel to simulate
 
-```bash
-python -m venv .venv
-.venv\Scripts\activate        # Windows
-pip install -e .
-pip install wxPython
+**If Three.js is missing** (blank 3D panel):
+
+```powershell
+cd MazatrolWeb
+.\scripts\download-three.ps1
 ```
 
-### Option C — conda (full stack including 3D)
+**If build fails with “file is being used by another process”:**
 
-```bash
+```powershell
+cd MazatrolWeb\MazatrolWeb.Client
+.\restart-dev.ps1
+```
+
+Or manually: stop all `dotnet run` instances, delete `obj` and `bin`, then `dotnet run` again.
+
+**Offline publish:**
+
+```powershell
+cd MazatrolWeb\MazatrolWeb.Client
+dotnet publish -c Release -o ./publish
+dotnet tool install -g dotnet-serve    # once
+dotnet serve --directory ./publish/wwwroot
+```
+
+---
+
+### Mazatrol Reader (Python desktop)
+
+**Requires:** Python 3.12+, wxPython, pythonocc-core (conda on Windows).
+
+#### Full install with 3D (Windows)
+
+```powershell
 conda create -n mazatrol python=3.12 wxpython pythonocc-core=7.8.1 -c conda-forge
 conda activate mazatrol
+cd c:\Users\Public\Documents\mazatrol-reader-aero\mazatrol-reader-aero
 pip install -e .
 ```
 
-## Running
+#### GUI only (no 3D)
 
-```bash
-# Installed entry point
+```powershell
+cd c:\Users\Public\Documents\mazatrol-reader-aero\mazatrol-reader-aero
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install wxPython
+pip install -e .
+```
+
+#### Run
+
+```powershell
 mazatrol-reader
-
-# Or module
+# or
 python -m mazatrol_reader
-
-# Legacy launcher
+# or
 python main.py
 ```
 
-Place Mazatrol program files in `programs/` or open/drag-drop any supported file.
+Place `.PBG` files in `programs/` or open via the file combo / drag-and-drop.
 
-Click **Play** to run the turning simulation (requires MAT + BAR/FACING units).
+---
 
-## Usage
+## Usage guide
 
-1. **Open** a program via the combo box, **Open…** button, or drag & drop.
-2. **Double-click** yellow `readData` cells to edit values.
-3. **Right-click** a unit row for delete / duplicate / export / insert.
-4. **Play** builds the 3D part from material stock and BAR figure cuts.
-5. Use **ISO / Front / Side / Up** to change the camera.
+### Mazatrol Web — Viewer page
+
+| Area | Action |
+|------|--------|
+| **Left rail** | Icon-only by default; click chevron to expand (Home / Viewer) |
+| **Program grid** | Green rows = names, yellow rows = values; click yellow row to select unit |
+| **Figure editor** | Edit `readData` fields; Delete / Duplicate / Export / Insert units |
+| **3D panel** | Play = simulate; ISO/Front/Side/Top; Wireframe; STL export |
+| **Layout** | ~62.5% program / ~37.5% 3D viewer |
+
+The lower panel header shows the selected unit, e.g. **`MAT 0xFC`** (material unit at file offset `0xFC`). That is correct when a MAT row is selected.
+
+### Mazatrol Reader — desktop
+
+1. Open a program from the combo box or drag-and-drop a `.PBG` onto the window
+2. Double-click yellow `readData` cells to edit
+3. Right-click a unit row → delete / duplicate / export / insert LIN·TPR·FACING
+4. **Play** → OpenCascade 3D simulation (boolean cuts from BAR figures)
+5. Camera buttons: ISO, Front, Side, Up
+
+---
+
+## Data files you may need locally
+
+These are **not always committed** to the repo; add them for full functionality:
+
+| Path | Purpose |
+|------|---------|
+| `qts200m.xml` | Unit structure definitions (included) |
+| `SAMPLE_NC_PROGRAM/PBG/*.PBG` | Sample Mazatrol binaries |
+| `programs/*.PBG` | Desktop app default load path |
+| `units/LIN.unit` | 100-byte insert template |
+| `units/TPR.unit` | 100-byte insert template |
+| `units/FACING.unit` | 400-byte insert template |
+| `assets/eureka.bmp` | Optional 3D background (desktop) |
+
+Insert-unit operations fail with a clear error if `units/*.unit` templates are missing.
+
+---
+
+## How parsing works
+
+1. Structure loaded from `qts200m.xml` (unit IDs, parameter offsets, types)
+2. Binary read starts at address **`0xFC`**, 100 bytes per unit slot
+3. Supported unit type IDs are listed in `DISPLAYED_UNIT_TYPE_IDS` (Python: `config.py`, C#: `MazatrolConstants.cs`)
+4. Parameter types: `readData`, `wholeNumber`, `readPattern`, `text`, etc.
+5. Simulation extracts **MAT** (stock OD/ID/length), **BAR** figures, **FACING** cuts → 3D profile
+
+---
+
+## 3D simulation notes
+
+| | Mazatrol Web | Mazatrol Reader |
+|---|--------------|-----------------|
+| Engine | Three.js lathe geometry | pythonOCC boolean CSG |
+| Accuracy | Good preview | Closer to original OCC logic |
+| Requires | Browser + Three.js | conda `pythonocc-core` |
+
+---
+
+## Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| Program loads (“11 blocks”) but no rows visible | Hard refresh (`Ctrl+F5`); ensure latest build with `ProgramGrid` |
+| Literal text `0x@Block.UnitAddress…` | Fixed in current code — refresh/rebuild |
+| `dotnet run` file lock on `rbcswa.dswa.cache.json` | Stop other dev servers; run `restart-dev.ps1` |
+| 3D panel empty | Run `MazatrolWeb\scripts\download-three.ps1` |
+| Insert unit fails | Add `units/LIN.unit`, `TPR.unit`, `FACING.unit` |
+| Simulation error “no MAT unit” | Program must contain a material (MAT) unit |
+| `pythonOCC not installed` | Use conda: `conda install -c conda-forge pythonocc-core` |
+| Blazor WASM preload warning in console | Harmless dev-server message; ignore |
+
+**Blazor debug hotkey:** `Shift+Alt+D` (when app has focus)
+
+---
+
+## Extending
+
+- Add unit types in `qts200m.xml`, then register IDs in `DISPLAYED_UNIT_TYPE_IDS`
+- Python simulation: `TurningProfileExtractor`, `TurningSimulator` in `mazatrol_reader/`
+- Web simulation: `TurningProfileExtractor`, `TurningMeshBuilder`, `three-scene.js`
+- Web unit handlers: `UnitHandlerRegistry` in `MazatrolWeb.Client/Services/`
+- Insert templates: `UNIT_TEMPLATES` / `config.UNIT_TEMPLATES`
+
+See also:
+
+- [MazatrolWeb/ARCHITECTURE.md](MazatrolWeb/ARCHITECTURE.md) — Blazor component graph & JS interop
+- [MazatrolWeb/README.md](MazatrolWeb/README.md) — Web-only quick reference
+
+---
 
 ## Breaking changes from legacy `main.py`
 
 | Legacy | Modern |
 |--------|--------|
-| Python 2 syntax | Python 3.12+ only |
-| Monolithic `main.py` | Package `mazatrol_reader.*` |
-| Global `display`, `prgLineAction` | Instance-based GUI callbacks |
+| Python 2 monolith | Python 3.12 package + Blazor WASM port |
 | `from OCC.BRepPrimAPI import *` | `from OCC.Core.BRepPrimAPI import …` |
+| Global `display`, `prgLineAction` | Scoped services / session state |
 | `wx.PySimpleApp()` | `wx.App(False)` |
-| Hard-coded `programs/VILLA.PBG` | Auto-detect first file in `programs/` |
-| Absolute pixel layout | `SplitterWindow` + sizers |
-| `print` debugging | `logging` module |
+| Single list control UI | Web: ProgramGrid + FigureEditor + Viewport3D |
 
-## Missing / not yet in repository
-
-The following referenced assets are **not committed** to this repo and must be supplied locally:
-
-- `programs/*.PBG` — sample Mazatrol binaries
-- `units/LIN.unit`, `units/TPR.unit`, `units/FACING.unit` — insert templates
-- `assets/eureka.bmp` — optional viewer background
-- `pbg_structure.xlsx`, `mcode.csv` — referenced in docs but unused by current code
-
-Insert-unit operations fail with a clear error if template files are missing.
-
-## Extending
-
-- Add unit types in `qts200m.xml`, then include their IDs in `config.DISPLAYED_UNIT_TYPE_IDS`
-- Add simulation support in `TurningProfileExtractor` and `TurningSimulator`
-- New insert templates: extend `config.UNIT_TEMPLATES`
+---
 
 ## License
 

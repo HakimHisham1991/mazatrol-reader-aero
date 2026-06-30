@@ -1,0 +1,152 @@
+@page "/viewer"
+@inject MazatrolAppService AppService
+@inject MazatrolSessionState Session
+@inject ThreeJsInterop ThreeJs
+@implements IDisposable
+
+<PageTitle>Mazatrol Viewer</PageTitle>
+
+<AppPageHeader Title="Mazatrol Program Viewer" />
+
+<FileDropZone OnFileLoaded="LoadFile" />
+
+<div class="viewer-split mt-2">
+    <div class="viewer-pane viewer-pane-left">
+        <div class="panel-dark p-2 rounded text-light program-pane">
+            <ProgramGrid OnSelected="OnBlockSelected" />
+        </div>
+        <div class="panel-dark p-2 rounded text-light editor-pane">
+            <FigureEditor Block="_selectedBlock" OnChanged="OnProgramChanged" />
+        </div>
+    </div>
+    <div class="viewer-pane viewer-pane-right">
+        <div class="panel-dark p-2 rounded h-100 text-light viewport-pane">
+            <Viewport3D @ref="_viewport"
+                          Wireframe="Session.WireframeEnabled"
+                          WireframeChanged="OnWireframeChanged"
+                          OnSimulate="Simulate" />
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(_message))
+{
+    <div class="alert alert-info mt-3 py-2">@_message</div>
+}
+
+@code {
+    private Viewport3D? _viewport;
+    private ProgramBlock? _selectedBlock;
+    private string? _message;
+
+    protected override void OnInitialized()
+    {
+        Session.OnChanged += StateHasChanged;
+    }
+
+    private async Task LoadFile((byte[] Data, string FileName) args)
+    {
+        _message = null;
+        try
+        {
+            await AppService.LoadProgramAsync(args.Data, args.FileName);
+            _selectedBlock = Session.SelectedBlock ?? Session.Blocks.FirstOrDefault(b => !string.IsNullOrEmpty(b.UnitName));
+            if (_selectedBlock is not null)
+                Session.SelectBlock(_selectedBlock.Id);
+            _message = $"Loaded {args.FileName} — {Session.Blocks.Count} blocks.";
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private void OnBlockSelected(ProgramBlock? block)
+    {
+        _selectedBlock = block ?? Session.SelectedBlock;
+    }
+
+    private async Task OnProgramChanged()
+    {
+        _selectedBlock = Session.SelectedBlock;
+        await Simulate();
+    }
+
+    private async Task Simulate()
+    {
+        if (!Session.HasFile)
+        {
+            _message = "Load a program first.";
+            return;
+        }
+
+        try
+        {
+            var profile = TurningProfileExtractor.Extract(Session.Blocks);
+            var mesh = TurningMeshBuilder.Build(profile);
+            if (_viewport is not null)
+                await _viewport.RenderSimulationAsync(mesh);
+            _message = "Simulation updated.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private Task OnWireframeChanged(bool value)
+    {
+        Session.WireframeEnabled = value;
+        return Task.CompletedTask;
+    }
+
+    public void Dispose() => Session.OnChanged -= StateHasChanged;
+}
+
+<style>
+    .panel-dark { background: #12121c; border: 1px solid #333; }
+
+    .viewer-split {
+        display: flex;
+        gap: 0.75rem;
+        height: calc(100vh - 8rem);
+        min-height: 520px;
+    }
+
+    .viewer-pane-left {
+        flex: 5 1 0;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .viewer-pane-right {
+        flex: 3 1 0;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .program-pane {
+        flex: 1 1 72%;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .editor-pane {
+        flex: 0 0 auto;
+        max-height: 28%;
+        overflow: auto;
+    }
+
+    .viewport-pane {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+</style>

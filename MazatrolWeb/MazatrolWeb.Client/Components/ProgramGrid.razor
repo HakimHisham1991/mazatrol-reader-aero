@@ -1,0 +1,137 @@
+@namespace MazatrolWeb.Client.Components
+@inject MazatrolSessionState Session
+@implements IDisposable
+
+<div class="program-grid h-100">
+    @if (!Session.HasFile)
+    {
+        <p class="text-secondary small mb-0">Load a program to view units.</p>
+    }
+    else if (_rows.Count == 0)
+    {
+        <p class="text-warning small mb-0">No displayable units in this file.</p>
+    }
+    else
+    {
+        <div class="table-responsive program-grid-scroll">
+            <table class="table table-sm table-dark table-bordered program-table mb-0">
+                <tbody>
+                    @foreach (var row in _rows)
+                    {
+                        if (string.IsNullOrEmpty(row.Block.UnitName) && row.Cells.All(c => string.IsNullOrEmpty(c.Text)))
+                            continue;
+
+                        var rowClass = row.IsTitleRow ? "program-title-row" : "program-data-row";
+                        var selected = !row.IsTitleRow && Session.SelectedBlockId == row.Block.Id;
+
+                        <tr class="@rowClass @(selected ? "selected" : "")"
+                            role="button"
+                            @onclick="() => SelectRow(row)">
+                            <td class="line-col">@row.LineNumber</td>
+                            @foreach (var cell in row.Cells)
+                            {
+                                <td>@cell.Text</td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback<ProgramBlock?> OnSelected { get; set; }
+
+    private IReadOnlyList<ProgramDisplayRow> _rows = [];
+
+    protected override void OnInitialized()
+    {
+        Session.OnChanged += RefreshRows;
+        RefreshRows();
+    }
+
+    private void RefreshRows()
+    {
+        _rows = Session.HasFile
+            ? ProgramDisplayBuilder.BuildRows(Session.Blocks)
+            : [];
+        StateHasChanged();
+    }
+
+    private async Task SelectRow(ProgramDisplayRow row)
+    {
+        if (row.IsTitleRow || string.IsNullOrEmpty(row.Block.UnitName))
+            return;
+
+        Session.SelectBlock(row.Block.Id);
+        await OnSelected.InvokeAsync(row.Block);
+    }
+
+    public void Dispose() => Session.OnChanged -= RefreshRows;
+}
+
+<style>
+    .program-grid {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .program-grid-scroll {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+        background: #000;
+        border-radius: 4px;
+    }
+
+    .program-table {
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 0.78rem;
+        white-space: nowrap;
+    }
+
+    .program-table td {
+        padding: 0.15rem 0.45rem;
+        vertical-align: middle;
+        color: #f0f0f0;
+    }
+
+    .line-col {
+        color: #888;
+        width: 2.5rem;
+        text-align: right;
+        position: sticky;
+        left: 0;
+        background: #111;
+        z-index: 1;
+    }
+
+    .program-title-row td {
+        color: #00c853;
+        font-weight: 600;
+    }
+
+    .program-title-row .line-col {
+        background: #0a1a0a;
+    }
+
+    .program-data-row td {
+        color: #ffe066;
+    }
+
+    .program-data-row .line-col {
+        background: #1a1a00;
+    }
+
+    .program-data-row.selected td {
+        background: rgba(255, 193, 7, 0.15);
+        outline: 1px solid #ffc107;
+    }
+
+    .program-data-row:hover td,
+    .program-title-row:hover td {
+        filter: brightness(1.15);
+    }
+</style>

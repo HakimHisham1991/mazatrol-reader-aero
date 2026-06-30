@@ -1,0 +1,82 @@
+@namespace MazatrolWeb.Client.Components
+@inject MazatrolSessionState Session
+
+<div class="unit-tree">
+    @if (!Session.HasFile)
+    {
+        <p class="text-muted small">Load a program to view units.</p>
+    }
+    else
+    {
+        @foreach (var group in GroupBlocks(Session.Blocks))
+        {
+            <div class="unit-group mb-2">
+                @if (group.Header is not null)
+                {
+                    <div class="unit-header"
+                         role="button"
+                         @onclick="() => Select(group.Header!)">
+                        <span class="badge bg-success me-1">UNIT</span>
+                        <strong>@group.Header.UnitName</strong>
+                        <span class="text-muted ms-1">#@group.Header.UnitNumber</span>
+                        <span class="text-muted ms-1">0x@(group.Header.UnitAddress.ToString("X"))</span>
+                    </div>
+                }
+                <ul class="list-unstyled ms-3 mb-0">
+                    @foreach (var block in group.Children)
+                    {
+                        <li class="figure-row @(Session.SelectedBlockId == block.Id ? "selected" : "")"
+                            role="button"
+                            @onclick="() => Select(block)">
+                            <span class="badge bg-warning text-dark me-1">@block.UnitName</span>
+                            @block.UnitNumber
+                            @if (block.Parameters.FirstOrDefault(p => p.Name is "PTN" or "SPT-X") is { } p)
+                            {
+                                <span class="text-muted ms-1">@p.DisplayValue</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback<ProgramBlock?> OnSelected { get; set; }
+
+    private async Task Select(ProgramBlock block)
+    {
+        Session.SelectBlock(block.Id);
+        await OnSelected.InvokeAsync(block);
+    }
+
+    private sealed record BlockGroup(ProgramBlock? Header, List<ProgramBlock> Children);
+
+    private static IEnumerable<BlockGroup> GroupBlocks(IReadOnlyList<ProgramBlock> blocks)
+    {
+        BlockGroup? current = null;
+        foreach (var block in blocks)
+        {
+            if (block.IsUnitHeader)
+            {
+                if (current is not null)
+                    yield return current;
+                current = new BlockGroup(block, []);
+            }
+            else
+            {
+                current ??= new BlockGroup(null, []);
+                current.Children.Add(block);
+            }
+        }
+        if (current is not null)
+            yield return current;
+    }
+}
+
+<style>
+    .unit-header, .figure-row { cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 4px; }
+    .figure-row.selected, .unit-header:hover, .figure-row:hover { background: rgba(255,255,255,0.08); }
+    .figure-row.selected { outline: 1px solid #ffc107; }
+</style>
