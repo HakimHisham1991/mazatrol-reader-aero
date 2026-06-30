@@ -11,6 +11,7 @@ PROJECT_ROOT = PACKAGE_DIR.parent
 STRUCTURE_XML = PROJECT_ROOT / "qts200m.xml"
 PBF_STRUCTURE_XML = PROJECT_ROOT / "pbf_structure.xml"
 PBD_STRUCTURE_XML = PROJECT_ROOT / "pbd_structure.xml"
+M6M_STRUCTURE_XML = PROJECT_ROOT / "m6m_structure.xml"
 PROGRAMS_DIR = PROJECT_ROOT / "programs"
 UNITS_DIR = PROJECT_ROOT / "units"
 ASSETS_DIR = PROJECT_ROOT / "assets"
@@ -102,6 +103,30 @@ PBD_DISPLAYED_UNIT_TYPE_IDS: frozenset[int] = frozenset(
     }
 )
 
+M6M_DISPLAYED_UNIT_TYPE_IDS: frozenset[int] = frozenset(
+    {
+        1,
+        2,
+        4,
+        5,
+        6,
+        32,
+        38,
+        55,
+        66,
+        67,
+        96,
+        99,
+        161,
+        176,
+        177,
+        178,
+        192,
+        193,
+        194,
+    }
+)
+
 
 def structure_xml_for_extension(extension: str) -> Path:
     ext = extension.lower()
@@ -109,6 +134,8 @@ def structure_xml_for_extension(extension: str) -> Path:
         return PBF_STRUCTURE_XML
     if ext == ".pbd":
         return PBD_STRUCTURE_XML
+    if ext == ".m6m":
+        return M6M_STRUCTURE_XML
     return STRUCTURE_XML
 
 
@@ -118,6 +145,8 @@ def displayed_unit_ids_for_extension(extension: str) -> frozenset[int]:
         return PBF_DISPLAYED_UNIT_TYPE_IDS
     if ext == ".pbd":
         return PBD_DISPLAYED_UNIT_TYPE_IDS
+    if ext == ".m6m":
+        return M6M_DISPLAYED_UNIT_TYPE_IDS
     return DISPLAYED_UNIT_TYPE_IDS
 
 SUPPORTED_PROGRAM_EXTENSIONS: frozenset[str] = frozenset(

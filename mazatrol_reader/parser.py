@@ -9,12 +9,17 @@ from pathlib import Path
 from typing import Any, BinaryIO
 
 from mazatrol_reader.config import (
-    DISPLAYED_UNIT_TYPE_IDS,
     END_UNIT_TYPE_ID,
     START_UNIT_ADDRESS,
     STRUCTURE_XML,
     displayed_unit_ids_for_extension,
     structure_xml_for_extension,
+)
+from mazatrol_reader.m6m_binary import (
+    HEADER_STRUCTURE_IDS,
+    m6m_has_wpc_coords,
+    m6m_should_stop,
+    resolve_m6m_structure_id,
 )
 from mazatrol_reader.html_parser import parse_html_file
 from mazatrol_reader.models import (
@@ -194,42 +199,120 @@ class PBGParser:
         blocks: list[ProgramBlock] = []
         with path.open("rb") as stream:
             reader = BinaryReader(stream)
-            index = 0
-            unit_type_id = -1
+            if extension == ".m6m":
+                file_size = path.stat().st_size
+                blocks = self._parse_m6m(reader, displayed_ids, file_size)
+            else:
+                index = 0
+                unit_type_id = -1
 
-            while unit_type_id != END_UNIT_TYPE_ID:
-                unit_address = START_UNIT_ADDRESS + index * 100
-                index += 1
-                unit_type_id = reader.read_byte(unit_address)
-                unit_number = reader.read_byte(unit_address + 2)
+                while unit_type_id != END_UNIT_TYPE_ID:
+                    unit_address = START_UNIT_ADDRESS + index * 100
+                    index += 1
+                    unit_type_id = reader.read_byte(unit_address)
+                    unit_number = reader.read_byte(unit_address + 2)
 
-                definition = self._structure[unit_type_id]
-                if unit_type_id not in displayed_ids:
+                    definition = self._structure[unit_type_id]
+                    if unit_type_id not in displayed_ids:
+                        logger.debug(
+                            "Skipping unsupported unit type id=%d name=%s at 0x%X",
+                            unit_type_id,
+                            definition.name,
+                            unit_address,
+                        )
+                        continue
+
+                    block = self._parse_block(
+                        reader=reader,
+                        definition=definition,
+                        unit_type_id=unit_type_id,
+                        unit_address=unit_address,
+                        unit_number=unit_number,
+                    )
+                    blocks.append(block)
                     logger.debug(
-                        "Skipping unsupported unit type id=%d name=%s at 0x%X",
+                        "Parsed unit 0x%X type=%d name=%s number=%d",
+                        unit_address,
                         unit_type_id,
                         definition.name,
-                        unit_address,
+                        unit_number,
                     )
-                    continue
 
-                block = self._parse_block(
+        logger.info("Parsed %d blocks from %s", len(blocks), path)
+        return blocks
+
+    def _parse_m6m(
+        self,
+        reader: BinaryReader,
+        displayed_ids: frozenset[int],
+        file_size: int,
+    ) -> list[ProgramBlock]:
+        reader._stream.seek(0)
+        data = reader._stream.read()
+
+        blocks: list[ProgramBlock] = []
+        index = 0
+        expect_sno = False
+        header_uno = -1
+        mat_address = START_UNIT_ADDRESS
+
+        while True:
+            unit_address = START_UNIT_ADDRESS + index * 100
+            slot_index = index
+            index += 1
+
+            raw_type = reader.read_byte(unit_address)
+            raw_num = reader.read_byte(unit_address + 2)
+
+            if m6m_should_stop(raw_type, raw_num, unit_address, file_size):
+                break
+
+            structure_id, expect_sno = resolve_m6m_structure_id(
+                slot_index,
+                raw_type,
+                raw_num,
+                expect_sno=expect_sno,
+            )
+            if structure_id < 0 or structure_id not in displayed_ids:
+                continue
+
+            definition = self._structure[structure_id]
+            if structure_id in HEADER_STRUCTURE_IDS:
+                header_uno += 1
+                unit_number = header_uno
+            else:
+                unit_number = raw_num
+
+            if slot_index == 0:
+                mat_address = unit_address
+
+            blocks.append(
+                self._parse_block(
                     reader=reader,
                     definition=definition,
-                    unit_type_id=unit_type_id,
+                    unit_type_id=structure_id,
                     unit_address=unit_address,
                     unit_number=unit_number,
                 )
-                blocks.append(block)
-                logger.debug(
-                    "Parsed unit 0x%X type=%d name=%s number=%d",
-                    unit_address,
-                    unit_type_id,
-                    definition.name,
-                    unit_number,
+            )
+
+            if (
+                structure_id == 1
+                and 2 in displayed_ids
+                and m6m_has_wpc_coords(data, mat_address)
+            ):
+                header_uno += 1
+                wpc_def = self._structure[2]
+                blocks.append(
+                    self._parse_block(
+                        reader=reader,
+                        definition=wpc_def,
+                        unit_type_id=2,
+                        unit_address=mat_address,
+                        unit_number=header_uno,
+                    )
                 )
 
-        logger.info("Parsed %d blocks from %s", len(blocks), path)
         return blocks
 
     def _parse_block(

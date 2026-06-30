@@ -2,7 +2,7 @@
 
 View, edit, and 3D-simulate **Mazatrol** programs for Mazak CNC lathe/turn machines.
 
-**Current version:** v1.4.2 · Developed by UPECA PDC
+**Current version:** v1.5.0 · Developed by UPECA PDC
 
 This repository contains two applications ported from the legacy Python 2 `main.py`:
 
@@ -11,16 +11,17 @@ This repository contains two applications ported from the legacy Python 2 `main.
 | **[Mazatrol Web](#mazatrol-web-blazor-wasm)** | .NET 10 Blazor WASM + Three.js | Browser, offline deploy, no conda |
 | **[Mazatrol Reader (desktop)](#mazatrol-reader-python-desktop)** | Python 3.12 + wxPython + pythonOCC | Full OpenCascade boolean simulation |
 
-Both parse binary Mazatrol files using structure definitions in `qts200m.xml` (PBG/turning), `pbf_structure.xml` (PBF/Matrix milling), and `pbd_structure.xml` (PBD/Matrix contour milling).
+Both parse binary Mazatrol files using structure definitions in `qts200m.xml` (PBG/turning), `pbf_structure.xml` (PBF/Matrix milling), `pbd_structure.xml` (PBD/Matrix contour milling), and `m6m_structure.xml` (M6M/M640M milling).
 
 ---
 
 ## Features
 
-- Parse binary Mazatrol programs (`.PBG`, `.PBF`, `.PBD`, `.MZK`, `.T6M`, …)
+- Parse binary Mazatrol programs (`.PBG`, `.PBF`, `.PBD`, `.M6M`, `.MZK`, `.T6M`, …)
 - Display units and figures in a program grid (green = parameter names, yellow = values)
 - **Undefined vs zero** — unset fields show `N/A` (Mazatrol `@`); defined zeros show `0`
 - **PBD Matrix contour** — MAT header (INITIAL-Z, ATC/MULTI modes, PITCH), OFS offset row, TOOL names, FIG PTN patterns, three SNo M-code columns
+- **M6M / M640M milling** — MAT + WPC-, FACE MIL, POCKET, DRILLING, CIRC MIL, TAPPING, MANU PRO, FIG/SNo companion slots
 - Edit `readData` parameters with binary write-back
 - Unit operations: **delete**, **duplicate**, **export**, **insert** LIN / TPR / FACING
 - 3D turned-part preview from MAT stock + BAR / FACING toolpaths (optional panel; hidden by default)
@@ -37,6 +38,7 @@ Sample programs (when present locally):
 
 ```
 SAMPLE_NC_PROGRAM/PBG/     e.g. AXIS28X140.PBG, CONUS.PBG, VILLA.PBG
+SAMPLE_NC_PROGRAM/M6M/     e.g. 19011400.M6M (+ matching .html exports)
 programs/                  optional copy location for desktop app
 ```
 
@@ -48,6 +50,8 @@ programs/                  optional copy location for desktop app
 mazatrol-reader-aero/
 ├── README.md                    ← this file
 ├── qts200m.xml                  ← unit/parameter structure (required)
+├── m6m_structure.xlsx           ← M6M structure workbook (reverse-engineered)
+├── m6m_structure.xml            ← M6M / M640M milling structure (required for .M6M)
 ├── mcode.csv                    ← reference data (not wired in code yet)
 ├── main.py                      ← legacy Python launcher
 ├── pyproject.toml               ← Python package config
@@ -71,6 +75,7 @@ mazatrol-reader-aero/
 │       ├── Services/            ← MazatrolParser.cs, turning sim, JS interop
 │       └── wwwroot/
 │           ├── data/qts200m.xml
+│           ├── data/m6m_structure.xml
 │           ├── js/              ← three-scene.js, interop.js
 │           └── lib/three/       ← Three.js r168 (offline)
 │

@@ -8,7 +8,7 @@
     <PublishTrimmed>true</PublishTrimmed>
     <WriteImportMapToHtml>true</WriteImportMapToHtml>
     <WasmApplicationEnvironmentName>Production</WasmApplicationEnvironmentName>
-    <Version>1.4.2</Version>
+    <Version>1.5.0</Version>
     <!-- Reduces rbcswa.dswa.cache.json lock errors when dev server + rebuild overlap (Windows) -->
     <StaticWebAssetsEnableCompression>false</StaticWebAssetsEnableCompression>
     <BuildInParallel>false</BuildInParallel>

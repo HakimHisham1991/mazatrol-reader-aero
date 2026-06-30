@@ -2,6 +2,16 @@
 
 All notable changes to Mazatrol Reader / Mazatrol Web follow [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] - 2026-06-29
+
+### Added
+- **M6M / M640M milling program support** — binary parser for `.M6M` files (Python + Blazor)
+- **`m6m_structure.xlsx` / `m6m_structure.xml`** — reverse-engineered from 18 sample pairs in `SAMPLE_NC_PROGRAM/M6M/` (`.M6M` + `.html`)
+- M6M slot resolver — 100-byte stride from `@0xFC`, type `@+0`, unit number `@+2`; companion slots for SNo/FIG
+- Synthetic **WPC-** block from MAT workpiece coordinates at `@+66…+78`
+- **`tools/build_m6m_structure.py`** — regenerates structure spreadsheet and XML from HTML + binary samples
+- **`MazatrolM6mBinary.cs`** — C# port of M6M slot layout helpers
+
 ## [1.4.2] - 2026-06-30
 
 ### Changed
@@ -105,6 +115,7 @@ All notable changes to Mazatrol Reader / Mazatrol Web follow [Semantic Versionin
 - Python 3.12 desktop port (`mazatrol_reader`) from legacy `main.py`
 - wxPython UI, pythonOCC turning simulation, modular parser/editor
 
+[1.5.0]: https://github.com/compare/v1.4.2...v1.5.0
 [1.4.2]: https://github.com/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/compare/v1.3.0...v1.4.0

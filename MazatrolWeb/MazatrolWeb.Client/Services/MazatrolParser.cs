@@ -168,11 +168,15 @@ public sealed class MazatrolParser
 
     public IReadOnlyList<ProgramBlock> Parse(byte[] data, string? fileExtension = null)
     {
+        var extension = fileExtension ?? ".pbg";
+        if (extension.Equals(".m6m", StringComparison.OrdinalIgnoreCase))
+            return ParseM6m(data);
+
         var reader = new MazatrolBinaryReader(data);
         var blocks = new List<ProgramBlock>();
         var index = 0;
         var unitTypeId = -1;
-        var displayedIds = MazatrolConstants.DisplayedUnitTypeIdsForExtension(fileExtension ?? ".pbg");
+        var displayedIds = MazatrolConstants.DisplayedUnitTypeIdsForExtension(extension);
 
         while (unitTypeId != MazatrolConstants.EndUnitTypeId)
         {
@@ -190,6 +194,63 @@ public sealed class MazatrolParser
                 continue;
 
             blocks.Add(ParseBlock(reader, definition, unitTypeId, unitAddress, unitNumber));
+        }
+
+        return blocks;
+    }
+
+    private IReadOnlyList<ProgramBlock> ParseM6m(byte[] data)
+    {
+        var reader = new MazatrolBinaryReader(data);
+        var blocks = new List<ProgramBlock>();
+        var displayedIds = MazatrolConstants.M6mDisplayedUnitTypeIds;
+        var index = 0;
+        var expectSno = false;
+        var headerUno = -1;
+        var matAddress = MazatrolConstants.StartUnitAddress;
+
+        while (true)
+        {
+            var unitAddress = MazatrolConstants.StartUnitAddress + index * 100;
+            var slotIndex = index;
+            index++;
+
+            var rawType = reader.ReadByte(unitAddress);
+            var rawNum = reader.ReadByte(unitAddress + 2);
+
+            if (MazatrolM6mBinary.ShouldStop(rawType, rawNum, unitAddress, data.Length))
+                break;
+
+            var (structureId, nextExpectSno) = MazatrolM6mBinary.ResolveStructureId(
+                slotIndex, rawType, rawNum, expectSno);
+            expectSno = nextExpectSno;
+
+            if (structureId < 0 || !displayedIds.Contains(structureId))
+                continue;
+
+            var definition = _structure[structureId];
+            int unitNumber;
+            if (MazatrolM6mBinary.IsHeaderUnit(structureId))
+            {
+                headerUno += 1;
+                unitNumber = headerUno;
+            }
+            else
+            {
+                unitNumber = rawNum;
+            }
+
+            if (slotIndex == 0)
+                matAddress = unitAddress;
+
+            blocks.Add(ParseBlock(reader, definition, structureId, unitAddress, unitNumber));
+
+            if (structureId == 1 && MazatrolM6mBinary.HasWpcCoords(data, matAddress))
+            {
+                headerUno += 1;
+                var wpcDef = _structure[2];
+                blocks.Add(ParseBlock(reader, wpcDef, 2, matAddress, headerUno));
+            }
         }
 
         return blocks;

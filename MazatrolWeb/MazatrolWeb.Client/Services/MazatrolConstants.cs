@@ -11,6 +11,7 @@ public static class MazatrolConstants
     public const string PbgStructureXmlPath = "data/qts200m.xml";
     public const string PbfStructureXmlPath = "data/pbf_structure.xml";
     public const string PbdStructureXmlPath = "data/pbd_structure.xml";
+    public const string M6mStructureXmlPath = "data/m6m_structure.xml";
 
     public static string StructureXmlPathForExtension(string extension)
     {
@@ -18,6 +19,8 @@ public static class MazatrolConstants
             return PbfStructureXmlPath;
         if (extension.Equals(".pbd", StringComparison.OrdinalIgnoreCase))
             return PbdStructureXmlPath;
+        if (extension.Equals(".m6m", StringComparison.OrdinalIgnoreCase))
+            return M6mStructureXmlPath;
         return PbgStructureXmlPath;
     }
 
@@ -38,12 +41,20 @@ public static class MazatrolConstants
         161, 176, 177, 178, 192, 193, 194
     ];
 
+    public static readonly HashSet<int> M6mDisplayedUnitTypeIds =
+    [
+        1, 2, 4, 5, 6, 32, 38, 55, 66, 67, 96, 99,
+        161, 176, 177, 178, 192, 193, 194
+    ];
+
     public static HashSet<int> DisplayedUnitTypeIdsForExtension(string extension)
     {
         if (extension.Equals(".pbf", StringComparison.OrdinalIgnoreCase))
             return PbfDisplayedUnitTypeIds;
         if (extension.Equals(".pbd", StringComparison.OrdinalIgnoreCase))
             return PbdDisplayedUnitTypeIds;
+        if (extension.Equals(".m6m", StringComparison.OrdinalIgnoreCase))
+            return M6mDisplayedUnitTypeIds;
         return PbgDisplayedUnitTypeIds;
     }
 
