@@ -4,7 +4,7 @@ using System.Xml.Linq;
 
 namespace MazatrolWeb.Client.Services;
 
-/// <summary>Loads unit definitions from qts200m.xml.</summary>
+/// <summary>Loads unit definitions from structure XML (e.g. pbg_structure.xml).</summary>
 public sealed class StructureLoader
 {
     private readonly HttpClient _http;

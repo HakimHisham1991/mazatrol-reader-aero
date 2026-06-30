@@ -8,7 +8,7 @@ public static class MazatrolConstants
     public const int FacingUnitSize = 400;
     public const int EndUnitTypeId = 4;
 
-    public const string PbgStructureXmlPath = "data/qts200m.xml";
+    public const string PbgStructureXmlPath = "data/pbg_structure.xml";
     public const string PbfStructureXmlPath = "data/pbf_structure.xml";
     public const string PbdStructureXmlPath = "data/pbd_structure.xml";
     public const string M6mStructureXmlPath = "data/m6m_structure.xml";

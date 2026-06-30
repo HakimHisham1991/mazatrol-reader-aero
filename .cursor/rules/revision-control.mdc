@@ -17,8 +17,6 @@ alwaysApply: true
 2. **Update ALL version sources** (keep in sync):
    - `MazatrolWeb/MazatrolWeb.Client/AppInfo.cs` (`AppInfo.Version`)
    - `MazatrolWeb/MazatrolWeb.Client/MazatrolWeb.Client.csproj` (`<Version>`)
-   - `pyproject.toml` (`version = "…"`)
-   - `mazatrol_reader/__init__.py` (`__version__`)
    - `README.md` — **Current version** line at top
    - `CHANGELOG.md` — new section with date, Added / Changed / Fixed bullets
 

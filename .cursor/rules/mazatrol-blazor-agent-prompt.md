@@ -21,7 +21,7 @@ You are a full-stack expert in .NET, Blazor WebAssembly, 3D web rendering, and C
 ## Features to Implement
 
 1. Drag & drop or `<InputFile>` component for `.PBG` files.
-2. Parse binary Mazatrol program in C# using structures from `qts200m.xml` / `pbg_structure.xlsx` — use `BinaryReader` with struct mappings.
+2. Parse binary Mazatrol program in C# using structures from `pbg_structure.xml` — use `BinaryReader` with struct mappings.
 3. Display hierarchical list of Units and Figures using Blazor component tree (similar to original app).
 4. Basic editing: delete/duplicate/insert common units (`LIN`, `TPR`, `FACING`, etc.) — bound to C# model with two-way `@bind`.
 5. **3D Machining Simulation** via JS interop:
@@ -49,7 +49,7 @@ MazatrolWeb/
 │   │   ├── Home.razor
 │   │   └── Viewer.razor
 │   ├── Components/
-│   │   ├── UnitTree.razor
+│   │   ├── ProgramGrid.razor
 │   │   ├── FigureEditor.razor
 │   │   └── Viewport3D.razor
 │   ├── Services/
@@ -118,9 +118,9 @@ MazatrolWeb/
 
 ### Phase 1 — Parser + Blazor UI Scaffolding
 - Blazor WASM standalone project scaffold targeting `net10.0`
-- `MazatrolParser.cs`: `BinaryReader`-based `.PBG` parser using `qts200m.xml` field definitions
+- `MazatrolParser.cs`: `BinaryReader`-based `.PBG` parser using `pbg_structure.xml` field definitions
 - `MazatrolModel.cs`: strongly-typed `PbgFile`, `Unit`, `Figure`, `Parameter` record types
-- `UnitTree.razor`: collapsible tree view of parsed units/figures
+- `ProgramGrid.razor`: Mazatrol program table (green/yellow rows) for parsed units/figures
 - `FigureEditor.razor`: editable parameter grid per selected figure; use `[ValidatableType]` + `AddValidation()` for AOT-safe form validation
 - `<InputFile>` drag-and-drop entry point in `Home.razor`
 - `[PersistentState]` on selected unit / viewer state

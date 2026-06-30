@@ -12,7 +12,7 @@ public sealed class ProgramDisplayRow
     public required IReadOnlyList<LegacyCell> Cells { get; init; }
 }
 
-/// <summary>Builds program list rows matching the legacy wxPython list view.</summary>
+/// <summary>Builds program list rows for the Mazatrol program grid.</summary>
 public static class ProgramDisplayBuilder
 {
     public static IReadOnlyList<ProgramDisplayRow> BuildRows(IReadOnlyList<ProgramBlock> blocks)

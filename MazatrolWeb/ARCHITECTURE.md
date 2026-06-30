@@ -1,6 +1,6 @@
 # Mazatrol Web — Architecture
 
-Offline-first Blazor WebAssembly viewer and turning simulator for Mazatrol `.PBG` programs.
+Offline-first Blazor WebAssembly viewer and turning simulator for Mazatrol programs.
 
 ## Component graph
 
@@ -8,7 +8,7 @@ Offline-first Blazor WebAssembly viewer and turning simulator for Mazatrol `.PBG
 ┌─────────────────────────────────────────────────────────────────┐
 │  Pages/Viewer.razor                                             │
 │  ├─ FileDropZone        ← InputFile + drag/drop                 │
-│  ├─ UnitTree            ← hierarchical unit/figure list         │
+│  ├─ ProgramGrid         ← Mazatrol program table (green/yellow) │
 │  ├─ FigureEditor        ← editable readData parameters          │
 │  └─ Viewport3D          ← canvas + Three.js via IJSRuntime      │
 └─────────────────────────────────────────────────────────────────┘
@@ -64,7 +64,10 @@ _handlers["FACING"] = new FacingUnitHandler();
 
 | Path | Purpose |
 |------|---------|
-| `data/qts200m.xml` | Unit/parameter structure definitions |
+| `data/pbg_structure.xml` | PBG / turning unit/parameter structure |
+| `data/pbf_structure.xml` | PBF milling structure |
+| `data/pbd_structure.xml` | PBD contour milling structure |
+| `data/m6m_structure.xml` | M6M milling structure |
 | `units/*.unit` | Insert templates (LIN, TPR, FACING) |
 | `lib/three/` | Vendored Three.js r168 (offline) |
 

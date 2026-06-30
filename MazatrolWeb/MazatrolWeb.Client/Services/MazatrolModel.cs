@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace MazatrolWeb.Client.Services;
 
-/// <summary>Parameter storage types from qts200m.xml.</summary>
+/// <summary>Parameter storage types from structure XML definitions.</summary>
 public enum ParameterType
 {
     NA,

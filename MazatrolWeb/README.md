@@ -2,7 +2,7 @@
 
 Browser-based Mazatrol viewer and turning simulator (.NET 10 Blazor WASM + Three.js).
 
-> **Full documentation** (both apps, troubleshooting, sample files): see the [root README](../README.md).
+> **Full documentation:** see the [root README](../README.md).
 
 ## Quick run
 
@@ -12,7 +12,7 @@ dotnet restore
 dotnet run
 ```
 
-Open the URL shown (e.g. `http://localhost:5101`) → **Viewer** → open a `.PBG`, `.PBF`, `.PBD`, or `.M6M` file (or `.HTML` Mazatrol export from `SAMPLE_NC_PROGRAM/`) → **Play**.
+Open the URL shown (e.g. `http://localhost:5101`) → **Viewer** → open a `.PBG`, `.PBF`, `.PBD`, `.M6M`, or `.HTML` Mazatrol export → **Play** (turning programs).
 
 ## Prerequisites
 
@@ -40,7 +40,7 @@ dotnet serve --directory ./publish/wwwroot
 
 - Collapsible **icon rail** nav (default: icons only; chevron to expand)
 - **~62.5%** width: program grid + unit editor
-- **~37.5%** width: Three.js 3D viewport
+- **~37.5%** width: Three.js 3D viewport (optional)
 - Program grid: green title rows, yellow data rows
 
 ## Key files
@@ -54,15 +54,12 @@ dotnet serve --directory ./publish/wwwroot
 | `Services/MazatrolParser.cs` | Binary parser (PBG, PBF, PBD, M6M) |
 | `Services/TurningSimulation.cs` | Profile extraction + mesh DTO |
 | `wwwroot/js/three-scene.js` | Three.js lathe rendering |
-| `wwwroot/data/qts200m.xml` | PBG / turning structure definitions |
+| `wwwroot/data/pbg_structure.xml` | PBG / turning structure definitions |
 | `wwwroot/data/pbf_structure.xml` | PBF / Matrix milling structure definitions |
 | `wwwroot/data/pbd_structure.xml` | PBD / Matrix contour milling structure definitions |
 | `wwwroot/data/m6m_structure.xml` | M6M / M640M milling structure definitions |
+| `wwwroot/units/` | LIN / TPR / FACING insert templates |
 
 ## Architecture
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the component graph and C# ↔ JavaScript interop boundary.
-
-## Python desktop app
-
-The wxPython + pythonOCC version lives in [`mazatrol_reader/`](../mazatrol_reader/) at the repo root.

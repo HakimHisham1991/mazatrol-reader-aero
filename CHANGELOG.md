@@ -1,6 +1,27 @@
 # Changelog
 
-All notable changes to Mazatrol Reader / Mazatrol Web follow [Semantic Versioning](https://semver.org/).
+All notable changes to Mazatrol Web follow [Semantic Versioning](https://semver.org/).
+
+## [2.1.0] - 2026-06-30
+
+### Changed
+- Renamed `qts200m.xml` → `pbg_structure.xml` (root and `wwwroot/data/`) to match `pbf_structure.xml`, `pbd_structure.xml`, and `m6m_structure.xml` naming
+
+## [2.0.0] - 2026-06-30
+
+### Removed
+- Python desktop app (`mazatrol_reader/`, wxPython, pythonOCC)
+- Legacy `main.py`, `pyproject.toml`, `requirements.txt`, Python tests, and structure build scripts
+- Blazor template pages (`Counter`, `Weather`) and unused `UnitTree` component
+- Root `programs/` and `units/` folders (templates now ship under `wwwroot/units/`)
+
+### Added
+- **`wwwroot/units/`** — LIN, TPR, and FACING insert templates (regenerate via `MazatrolWeb/scripts/gen-unit-templates.ps1`)
+
+### Changed
+- Repository is **Mazatrol Web only** (.NET 10 Blazor WASM standalone)
+- Documentation consolidated for web-only deployment
+- Version policy in `.cursor/rules/revision-control.mdc` no longer tracks Python package versions
 
 ## [1.5.0] - 2026-06-29
 
@@ -115,6 +136,8 @@ All notable changes to Mazatrol Reader / Mazatrol Web follow [Semantic Versionin
 - Python 3.12 desktop port (`mazatrol_reader`) from legacy `main.py`
 - wxPython UI, pythonOCC turning simulation, modular parser/editor
 
+[2.1.0]: https://github.com/compare/v2.0.0...v2.1.0
+[2.0.0]: https://github.com/compare/v1.5.0...v2.0.0
 [1.5.0]: https://github.com/compare/v1.4.2...v1.5.0
 [1.4.2]: https://github.com/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/compare/v1.4.0...v1.4.1
