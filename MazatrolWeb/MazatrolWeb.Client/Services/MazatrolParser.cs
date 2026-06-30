@@ -11,9 +11,12 @@ public sealed class StructureLoader
 
     public StructureLoader(HttpClient http) => _http = http;
 
-    public async Task<IReadOnlyList<UnitDefinition>> LoadAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyList<UnitDefinition>> LoadAsync(
+        string? fileExtension = null,
+        CancellationToken ct = default)
     {
-        var xml = await _http.GetStringAsync(MazatrolConstants.StructureXmlPath, ct);
+        var path = MazatrolConstants.StructureXmlPathForExtension(fileExtension ?? ".pbg");
+        var xml = await _http.GetStringAsync(path, ct);
         var root = XDocument.Parse(xml).Root
             ?? throw new InvalidOperationException("Invalid structure XML.");
 
@@ -36,7 +39,7 @@ public sealed class StructureLoader
                 unitId,
                 name,
                 parameters,
-                name is "SNo" or "FIG");
+                name is "SNo" or "FIG" or "OFS");
         }
 
         return definitions;
@@ -53,7 +56,7 @@ public sealed class StructureLoader
             .ToHashSet(StringComparer.Ordinal);
 
         IReadOnlyList<PatternOption> patternOptions = [];
-        if (paramType == ParameterType.ReadPattern)
+        if (paramType is ParameterType.ReadPattern or ParameterType.ReadPbdTool)
         {
             patternOptions = elem.Elements("enum")
                 .Select(e => new PatternOption(
@@ -80,6 +83,8 @@ public sealed class StructureLoader
         "readFullNumber1B" => ParameterType.ReadFullNumber1B,
         "readLetter" => ParameterType.ReadLetter,
         "readPattern" => ParameterType.ReadPattern,
+        "readPbdTool" => ParameterType.ReadPbdTool,
+        "readPbdMultiFlag" => ParameterType.ReadPbdMultiFlag,
         "partType" => ParameterType.PartType,
         _ => ParameterType.Unknown
     };
@@ -92,6 +97,8 @@ public sealed class MazatrolBinaryReader
 
     public MazatrolBinaryReader(byte[] data) => _data = data;
 
+    public byte[] Data => _data;
+
     public byte ReadByte(int address) => _data[address];
 
     public ushort ReadUInt16(int address) =>
@@ -102,6 +109,9 @@ public sealed class MazatrolBinaryReader
 
     public float ReadScaledInt(int address) =>
         BitConverter.ToInt32(_data, address) / 10_000f;
+
+    public int ReadScaledIntRaw(int address) =>
+        BitConverter.ToInt32(_data, address);
 
     public string ReadText(int address, int length = 16)
     {
@@ -123,6 +133,25 @@ public sealed class MazatrolBinaryReader
         return "ERR";
     }
 
+    /// <summary>PBD SNo tool type: packed (byte+9, byte+13) within the 100-byte unit block.</summary>
+    public string ReadPbdTool(int unitAddress, IReadOnlyList<PatternOption> options)
+    {
+        var key = (ReadByte(unitAddress + 9) << 8) | ReadByte(unitAddress + 13);
+        foreach (var option in options)
+        {
+            if (key == option.Value)
+                return option.Name;
+        }
+        return "ERR";
+    }
+
+    /// <summary>PBD MAT MULTI FLAG: TYPE when MULTI MODE byte +9 is OFFSET (3).</summary>
+    public (string Value, bool IsDefined) ReadPbdMultiFlag(int unitAddress)
+    {
+        var mode = ReadByte(unitAddress + 9);
+        return mode == 3 ? ("TYPE", true) : ("*", false);
+    }
+
     public void WriteScaledInt(int address, float value)
     {
         var packed = (uint)(value * 10_000f);
@@ -137,12 +166,13 @@ public sealed class MazatrolParser
 
     public MazatrolParser(IReadOnlyList<UnitDefinition> structure) => _structure = structure;
 
-    public IReadOnlyList<ProgramBlock> Parse(byte[] data)
+    public IReadOnlyList<ProgramBlock> Parse(byte[] data, string? fileExtension = null)
     {
         var reader = new MazatrolBinaryReader(data);
         var blocks = new List<ProgramBlock>();
         var index = 0;
         var unitTypeId = -1;
+        var displayedIds = MazatrolConstants.DisplayedUnitTypeIdsForExtension(fileExtension ?? ".pbg");
 
         while (unitTypeId != MazatrolConstants.EndUnitTypeId)
         {
@@ -156,7 +186,7 @@ public sealed class MazatrolParser
             var unitNumber = reader.ReadByte(unitAddress + 2);
             var definition = _structure[unitTypeId];
 
-            if (!MazatrolConstants.DisplayedUnitTypeIds.Contains(unitTypeId))
+            if (!displayedIds.Contains(unitTypeId))
                 continue;
 
             blocks.Add(ParseBlock(reader, definition, unitTypeId, unitAddress, unitNumber));
@@ -178,7 +208,7 @@ public sealed class MazatrolParser
 
         foreach (var paramDef in definition.Parameters)
         {
-            var value = ReadParameterValue(reader, paramDef, unitAddress);
+            var (value, isDefined) = ReadParameterValue(reader, paramDef, unitAddress, unitTypeId);
 
             if (paramDef.ParamType == ParameterType.ReadPattern)
                 visiblePattern = value?.ToString() ?? string.Empty;
@@ -186,17 +216,22 @@ public sealed class MazatrolParser
             if (paramDef.ParamType != ParameterType.ReadPattern)
             {
                 if (paramDef.VisibleFor.Count > 0 && !paramDef.VisibleFor.Contains(visiblePattern))
+                {
                     value = "*";
+                    isDefined = false;
+                }
             }
 
             if (ignoreNext)
             {
                 value = string.Empty;
+                isDefined = false;
                 ignoreNext = false;
             }
             else if (unitTypeId == 161 && value?.ToString() == "W")
             {
                 value = string.Empty;
+                isDefined = false;
                 ignoreNext = true;
             }
 
@@ -205,7 +240,8 @@ public sealed class MazatrolParser
                 Name = paramDef.Name,
                 Value = value!,
                 FileOffset = unitAddress + paramDef.Offset,
-                ParamType = paramDef.ParamType
+                ParamType = paramDef.ParamType,
+                IsDefined = isDefined
             });
         }
 
@@ -220,27 +256,74 @@ public sealed class MazatrolParser
         };
     }
 
-    private static object ReadParameterValue(
+    private static (object Value, bool IsDefined) ReadParameterValue(
         MazatrolBinaryReader reader,
         ParameterDefinition paramDef,
-        int unitAddress)
+        int unitAddress,
+        int unitTypeId)
     {
         var address = unitAddress + paramDef.Offset;
 
-        return paramDef.ParamType switch
+        switch (paramDef.ParamType)
         {
-            ParameterType.NA => "*",
-            ParameterType.WholeNumber => reader.ReadFixedPoint32(address),
-            ParameterType.ReadData => reader.ReadScaledInt(address),
-            ParameterType.Text => reader.ReadText(address),
-            ParameterType.ReadFullNumber2B => reader.ReadUInt16(address),
-            ParameterType.ReadFullNumber1B => reader.ReadByte(address),
-            ParameterType.ReadLetter => reader.ReadLetter(address).ToString(),
-            ParameterType.ReadPattern => reader.ReadPattern(address, paramDef.PatternOptions),
-            ParameterType.PartType => reader.ReadByte(address),
-            _ when paramDef.Offset == 0 => "?",
-            _ => "ERROR"
-        };
+            case ParameterType.NA:
+                return ("*", false);
+
+            case ParameterType.WholeNumber:
+            {
+                var raw = BitConverter.ToUInt32(reader.Data, address);
+                return (reader.ReadFixedPoint32(address), raw != 0);
+            }
+
+            case ParameterType.ReadData:
+            {
+                var raw = reader.ReadScaledIntRaw(address);
+                var isDefined = MazatrolParameterFormatter.IsReadDataDefined(
+                    unitAddress, paramDef.Offset, raw, reader.Data);
+                if (unitTypeId == 160)
+                    isDefined = true;
+                return (reader.ReadScaledInt(address), isDefined);
+            }
+
+            case ParameterType.Text:
+                return (reader.ReadText(address), true);
+
+            case ParameterType.ReadFullNumber2B:
+            {
+                var raw = reader.ReadUInt16(address);
+                var isDefined = raw != 0 || paramDef.Name == "ATC MODE";
+                return (raw, isDefined);
+            }
+
+            case ParameterType.ReadFullNumber1B:
+            {
+                var raw = reader.ReadByte(address);
+                return (raw, raw != 0);
+            }
+
+            case ParameterType.ReadLetter:
+                return (reader.ReadLetter(address).ToString(), true);
+
+            case ParameterType.ReadPattern:
+                return (reader.ReadPattern(address, paramDef.PatternOptions), true);
+
+            case ParameterType.ReadPbdTool:
+                return (reader.ReadPbdTool(unitAddress, paramDef.PatternOptions), true);
+
+            case ParameterType.ReadPbdMultiFlag:
+                return reader.ReadPbdMultiFlag(unitAddress);
+
+            case ParameterType.PartType:
+            {
+                var raw = reader.ReadByte(address);
+                return (raw, raw != 0);
+            }
+
+            default:
+                if (paramDef.Offset == 0)
+                    return ("?", false);
+                return ("ERROR", false);
+        }
     }
 
     public void WriteParameter(byte[] data, int fileOffset, ParameterType paramType, string newValue)

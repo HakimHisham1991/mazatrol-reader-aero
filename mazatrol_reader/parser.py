@@ -13,7 +13,10 @@ from mazatrol_reader.config import (
     END_UNIT_TYPE_ID,
     START_UNIT_ADDRESS,
     STRUCTURE_XML,
+    displayed_unit_ids_for_extension,
+    structure_xml_for_extension,
 )
+from mazatrol_reader.html_parser import parse_html_file
 from mazatrol_reader.models import (
     BarFigure,
     FacingCut,
@@ -26,6 +29,7 @@ from mazatrol_reader.models import (
     TurningSimulationInput,
     UnitDefinition,
 )
+from mazatrol_reader.parameter_formatter import is_read_data_defined_with_flags
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +57,7 @@ class StructureLoader:
 
             name = unit_elem.get("name", "TBD")
             params = tuple(self._parse_parameter(param) for param in unit_elem)
-            is_sub_unit = name in {"SNo", "FIG"}
+            is_sub_unit = name in {"SNo", "FIG", "OFS"}
             definitions[unit_id] = UnitDefinition(
                 unit_id=unit_id,
                 name=name,
@@ -71,7 +75,7 @@ class StructureLoader:
         visible_for = frozenset(v.strip() for v in visible_raw.split(",") if v.strip())
 
         pattern_options: tuple[PatternOption, ...] = ()
-        if param_type == ParameterType.READ_PATTERN:
+        if param_type in {ParameterType.READ_PATTERN, ParameterType.READ_PBD_TOOL}:
             pattern_options = tuple(
                 PatternOption(
                     name=option.get("name", ""),
@@ -109,9 +113,15 @@ class BinaryReader:
         return float(word) / (2**16)
 
     def read_scaled_int(self, address: int) -> float:
+        return float(self.read_scaled_int_raw(address)) / 10_000
+
+    def read_scaled_int_raw(self, address: int) -> int:
         self._stream.seek(address)
-        word = struct.unpack("<i", self._stream.read(4))[0]
-        return float(word) / 10_000
+        return struct.unpack("<i", self._stream.read(4))[0]
+
+    def read_uint32_raw(self, address: int) -> int:
+        self._stream.seek(address)
+        return struct.unpack("<I", self._stream.read(4))[0]
 
     def read_text(self, address: int, length: int = 16) -> str:
         self._stream.seek(address)
@@ -130,6 +140,19 @@ class BinaryReader:
                 return option.name
         return "ERR"
 
+    def read_pbd_tool(self, unit_address: int, options: tuple[PatternOption, ...]) -> str:
+        key = (self.read_byte(unit_address + 9) << 8) | self.read_byte(unit_address + 13)
+        for option in options:
+            if key == option.value:
+                return option.name
+        return "ERR"
+
+    def read_pbd_multi_flag(self, unit_address: int) -> tuple[str, bool]:
+        mode = self.read_byte(unit_address + 9)
+        if mode == 3:
+            return "TYPE", True
+        return "*", False
+
     def write_scaled_int(self, address: int, value: float) -> None:
         self._stream.seek(address)
         packed = struct.pack("<I", int(float(value) * 10_000))
@@ -144,8 +167,9 @@ class PBGParser:
         structure: list[UnitDefinition] | None = None,
         structure_path: Path | None = None,
     ) -> None:
+        self._structure_path = structure_path or STRUCTURE_XML
         if structure is None:
-            structure = StructureLoader(structure_path).load()
+            structure = StructureLoader(self._structure_path).load()
         self._structure = structure
 
     @property
@@ -157,6 +181,16 @@ class PBGParser:
         if not path.is_file():
             raise FileNotFoundError(f"Program file not found: {path}")
 
+        extension = path.suffix.lower()
+        if extension in {".html", ".htm"}:
+            return parse_html_file(path)
+
+        expected_structure = structure_xml_for_extension(extension)
+        if self._structure_path != expected_structure:
+            self._structure = StructureLoader(expected_structure).load()
+            self._structure_path = expected_structure
+
+        displayed_ids = displayed_unit_ids_for_extension(extension)
         blocks: list[ProgramBlock] = []
         with path.open("rb") as stream:
             reader = BinaryReader(stream)
@@ -170,7 +204,7 @@ class PBGParser:
                 unit_number = reader.read_byte(unit_address + 2)
 
                 definition = self._structure[unit_type_id]
-                if unit_type_id not in DISPLAYED_UNIT_TYPE_IDS:
+                if unit_type_id not in displayed_ids:
                     logger.debug(
                         "Skipping unsupported unit type id=%d name=%s at 0x%X",
                         unit_type_id,
@@ -211,10 +245,11 @@ class PBGParser:
         parameters: list[ParameterValue] = []
 
         for param_def in definition.parameters:
-            value = self._read_parameter_value(
+            value, is_defined = self._read_parameter_value(
                 reader=reader,
                 param_def=param_def,
                 unit_address=unit_address,
+                unit_type_id=unit_type_id,
             )
 
             if param_def.param_type == ParameterType.READ_PATTERN:
@@ -223,12 +258,15 @@ class PBGParser:
             if param_def.param_type != ParameterType.READ_PATTERN:
                 if param_def.visible_for and visible_pattern not in param_def.visible_for:
                     value = "*"
+                    is_defined = False
 
             if ignore_next:
                 value = ""
+                is_defined = False
                 ignore_next = False
             elif unit_type_id == 161 and value == "W":
                 value = ""
+                is_defined = False
                 ignore_next = True
 
             parameters.append(
@@ -237,6 +275,7 @@ class PBGParser:
                     value=value,
                     file_offset=unit_address + param_def.offset,
                     param_type=param_def.param_type,
+                    is_defined=is_defined,
                 )
             )
 
@@ -254,36 +293,53 @@ class PBGParser:
         reader: BinaryReader,
         param_def: ParameterDefinition,
         unit_address: int,
-    ) -> object:
+        unit_type_id: int,
+    ) -> tuple[object, bool]:
         address = unit_address + param_def.offset
         param_type = param_def.param_type
+        flags_byte = reader.read_byte(unit_address + 30)
 
         if param_type == ParameterType.NA:
-            return "*"
+            return "*", False
         if param_def.offset == 0 and param_type not in {
             ParameterType.READ_PATTERN,
             ParameterType.PART_TYPE,
+            ParameterType.READ_PBD_TOOL,
+            ParameterType.READ_PBD_MULTI_FLAG,
         }:
-            return "?"
+            return "?", False
         if param_type == ParameterType.WHOLE_NUMBER:
-            return reader.read_fixed_point_32(address)
+            raw = reader.read_uint32_raw(address)
+            return reader.read_fixed_point_32(address), raw != 0
         if param_type == ParameterType.READ_DATA:
-            return reader.read_scaled_int(address)
+            raw = reader.read_scaled_int_raw(address)
+            defined = is_read_data_defined_with_flags(param_def.offset, raw, flags_byte)
+            if unit_type_id == 160:
+                defined = True
+            return reader.read_scaled_int(address), defined
         if param_type == ParameterType.TEXT:
-            return reader.read_text(address)
+            return reader.read_text(address), True
         if param_type == ParameterType.READ_FULL_NUMBER_2B:
-            return reader.read_uint16(address)
+            raw = reader.read_uint16(address)
+            defined = raw != 0 or param_def.name == "ATC MODE"
+            return raw, defined
         if param_type == ParameterType.READ_FULL_NUMBER_1B:
-            return reader.read_byte(address)
+            raw = reader.read_byte(address)
+            return raw, raw != 0
         if param_type == ParameterType.READ_LETTER:
-            return reader.read_letter(address)
+            return reader.read_letter(address), True
         if param_type == ParameterType.READ_PATTERN:
-            return reader.read_pattern(address, param_def.pattern_options)
+            return reader.read_pattern(address, param_def.pattern_options), True
+        if param_type == ParameterType.READ_PBD_TOOL:
+            return reader.read_pbd_tool(unit_address, param_def.pattern_options), True
+        if param_type == ParameterType.READ_PBD_MULTI_FLAG:
+            return reader.read_pbd_multi_flag(unit_address)
         if param_type == ParameterType.PART_TYPE:
-            return reader.read_byte(address)
+            raw = reader.read_byte(address)
+            return raw, raw != 0
 
         logger.warning("Unknown parameter type %s for %s", param_type, param_def.name)
-        return "ERROR"
+        return "ERROR", False
 
     def to_legacy_program(self, blocks: list[ProgramBlock]) -> list[list[list[Any]]]:
         return [block.to_legacy_rows() for block in blocks]

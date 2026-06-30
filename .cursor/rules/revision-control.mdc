@@ -14,10 +14,29 @@ alwaysApply: true
    - **MINOR** (e.g., 1.2.0 → 1.3.0): New features, significant improvements
    - **PATCH** (e.g., 1.2.3 → 1.2.4): Bug fixes, small tweaks, UI polish
 
-2. **Update TWO files**:
-   - `C:/Users/Public/Documents/part-rfq-pro/part-rfq-pro/src/ThreeDAnalyzer.Web/Pages/Shared/_Layout.cshtml`
-   - `CHANGELOG.md` (in project root)
+2. **Update ALL version sources** (keep in sync):
+   - `MazatrolWeb/MazatrolWeb.Client/AppInfo.cs` (`AppInfo.Version`)
+   - `MazatrolWeb/MazatrolWeb.Client/MazatrolWeb.Client.csproj` (`<Version>`)
+   - `pyproject.toml` (`version = "…"`)
+   - `mazatrol_reader/__init__.py` (`__version__`)
+   - `README.md` — **Current version** line at top
+   - `CHANGELOG.md` — new section with date, Added / Changed / Fixed bullets
 
 3. **Do this as the FINAL step** before declaring the task complete.
 
+### CHANGELOG format
 
+```markdown
+## [X.Y.Z] - YYYY-MM-DD
+
+### Added
+- …
+
+### Changed
+- …
+
+### Fixed
+- …
+```
+
+Add compare link at bottom: `[X.Y.Z]: https://github.com/compare/vPREV...vX.Y.Z`

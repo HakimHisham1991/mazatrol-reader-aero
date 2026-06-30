@@ -45,6 +45,20 @@ def test_binary_reader_scaled_int(tmp_path: Path) -> None:
         assert reader.read_scaled_int(0) == 25.0
 
 
+def test_read_data_undefined_zero_is_na() -> None:
+    from mazatrol_reader.parameter_formatter import (
+        NOT_APPLICABLE,
+        format_display_value,
+        is_read_data_defined_with_flags,
+    )
+
+    assert not is_read_data_defined_with_flags(52, 0, 0)
+    assert format_display_value(0.0, ParameterType.READ_DATA, False) == NOT_APPLICABLE
+    assert format_display_value(0.0, ParameterType.READ_DATA, True) == "0"
+    assert is_read_data_defined_with_flags(56, 0, 0b0000_0001)
+    assert format_display_value(0, ParameterType.READ_FULL_NUMBER_2B, False) == NOT_APPLICABLE
+
+
 def test_parser_end_unit(tmp_path: Path, structure_xml: Path) -> None:
     program = tmp_path / "test.pbg"
     payload = bytearray(0x200)

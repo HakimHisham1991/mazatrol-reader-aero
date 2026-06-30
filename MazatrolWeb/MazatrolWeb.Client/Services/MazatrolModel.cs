@@ -13,6 +13,8 @@ public enum ParameterType
     ReadFullNumber1B,
     ReadLetter,
     ReadPattern,
+    ReadPbdTool,
+    ReadPbdMultiFlag,
     PartType,
     Unknown
 }
@@ -53,8 +55,10 @@ public sealed class ParameterValue
     public required object Value { get; set; }
     public required int FileOffset { get; init; }
     public required ParameterType ParamType { get; init; }
-    public string DisplayValue => Value?.ToString() ?? string.Empty;
-    public bool IsEditable => ParamType == ParameterType.ReadData;
+    public bool IsDefined { get; init; } = true;
+    public string DisplayValue =>
+        MazatrolParameterFormatter.Format(Value, ParamType, IsDefined);
+    public bool IsEditable => ParamType == ParameterType.ReadData && IsDefined;
 }
 
 public sealed partial class ProgramBlock

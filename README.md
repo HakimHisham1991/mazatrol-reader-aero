@@ -2,7 +2,7 @@
 
 View, edit, and 3D-simulate **Mazatrol** programs for Mazak CNC lathe/turn machines.
 
-**Current version:** v1.1.3 · Developed by UPECA PDC
+**Current version:** v1.4.2 · Developed by UPECA PDC
 
 This repository contains two applications ported from the legacy Python 2 `main.py`:
 
@@ -11,7 +11,7 @@ This repository contains two applications ported from the legacy Python 2 `main.
 | **[Mazatrol Web](#mazatrol-web-blazor-wasm)** | .NET 10 Blazor WASM + Three.js | Browser, offline deploy, no conda |
 | **[Mazatrol Reader (desktop)](#mazatrol-reader-python-desktop)** | Python 3.12 + wxPython + pythonOCC | Full OpenCascade boolean simulation |
 
-Both parse binary Mazatrol files using structure definitions in `qts200m.xml`.
+Both parse binary Mazatrol files using structure definitions in `qts200m.xml` (PBG/turning), `pbf_structure.xml` (PBF/Matrix milling), and `pbd_structure.xml` (PBD/Matrix contour milling).
 
 ---
 
@@ -19,9 +19,12 @@ Both parse binary Mazatrol files using structure definitions in `qts200m.xml`.
 
 - Parse binary Mazatrol programs (`.PBG`, `.PBF`, `.PBD`, `.MZK`, `.T6M`, …)
 - Display units and figures in a program grid (green = parameter names, yellow = values)
+- **Undefined vs zero** — unset fields show `N/A` (Mazatrol `@`); defined zeros show `0`
+- **PBD Matrix contour** — MAT header (INITIAL-Z, ATC/MULTI modes, PITCH), OFS offset row, TOOL names, FIG PTN patterns, three SNo M-code columns
 - Edit `readData` parameters with binary write-back
 - Unit operations: **delete**, **duplicate**, **export**, **insert** LIN / TPR / FACING
-- 3D turned-part preview from MAT stock + BAR / FACING toolpaths
+- 3D turned-part preview from MAT stock + BAR / FACING toolpaths (optional panel; hidden by default)
+- **Loading progress bar** when opening a program file
 - Camera presets: ISO, Front, Side, Top; wireframe toggle; STL export (Web)
 
 ---
@@ -64,7 +67,7 @@ mazatrol-reader-aero/
 │   ├── scripts/download-three.ps1
 │   └── MazatrolWeb.Client/
 │       ├── Pages/Viewer.razor   ← main UI
-│       ├── Components/          ← ProgramGrid, FigureEditor, Viewport3D, …
+│       ├── Components/          ← ProgramGrid, FigureEditor, Viewport3D, LoadingOverlay, …
 │       ├── Services/            ← MazatrolParser.cs, turning sim, JS interop
 │       └── wwwroot/
 │           ├── data/qts200m.xml
@@ -93,9 +96,9 @@ dotnet run
 
 1. Open the URL from the terminal (e.g. `http://localhost:5101`)
 2. Click the **Viewer** icon in the left rail (expand the rail with the chevron if needed)
-3. **Open Mazatrol program…** and select a `.PBG` file (e.g. `SAMPLE_NC_PROGRAM\PBG\CONUS.PBG`)
+3. **Open Mazatrol program…** and select a `.PBG`, `.PBF`, or `.PBD` file (progress overlay while loading)
 4. Click a **yellow row** in the program grid to select a unit
-5. Click **Play** in the 3D panel to simulate
+5. Use **Show 3D panel** if you want the turning preview; click **Play** to simulate
 
 **If Three.js is missing** (blank 3D panel):
 
@@ -168,10 +171,11 @@ Place `.PBG` files in `programs/` or open via the file combo / drag-and-drop.
 | Area | Action |
 |------|--------|
 | **Left rail** | Icon-only by default; click chevron to expand (Home / Viewer) |
+| **Open file** | Progress overlay: reading → parsing → building view |
 | **Program grid** | Green rows = names, yellow rows = values; click yellow row to select unit |
-| **Figure editor** | Edit `readData` fields; Delete / Duplicate / Export / Insert units |
-| **3D panel** | Play = simulate; ISO/Front/Side/Top; Wireframe; STL export |
-| **Layout** | ~62.5% program / ~37.5% 3D viewer |
+| **Figure editor** | Edit `readData` fields; read-only / undefined values show `N/A` |
+| **3D panel** | Hidden by default; **Show 3D panel** toggle; Play = simulate; ISO/Front/Side/Top; Wireframe; STL export |
+| **Layout** | Full-width program grid when 3D hidden; split view when 3D shown |
 
 The lower panel header shows the selected unit, e.g. **`MAT 0xFC`** (material unit at file offset `0xFC`). That is correct when a MAT row is selected.
 
@@ -208,8 +212,9 @@ Insert-unit operations fail with a clear error if `units/*.unit` templates are m
 1. Structure loaded from `qts200m.xml` (unit IDs, parameter offsets, types)
 2. Binary read starts at address **`0xFC`**, 100 bytes per unit slot
 3. Supported unit type IDs are listed in `DISPLAYED_UNIT_TYPE_IDS` (Python: `config.py`, C#: `MazatrolConstants.cs`)
-4. Parameter types: `readData`, `wholeNumber`, `readPattern`, `text`, etc.
-5. Simulation extracts **MAT** (stock OD/ID/length), **BAR** figures, **FACING** cuts → 3D profile
+4. Parameter types: `readData`, `wholeNumber`, `readPattern`, `readPbdTool`, `text`, etc.
+5. Undefined values (`@` in Mazatrol HTML) → display `N/A`; zero only when the field is defined in binary
+6. Simulation extracts **MAT** (stock OD/ID/length), **BAR** figures, **FACING** cuts → 3D profile
 
 ---
 
@@ -264,9 +269,3 @@ See also:
 | Global `display`, `prgLineAction` | Scoped services / session state |
 | `wx.PySimpleApp()` | `wx.App(False)` |
 | Single list control UI | Web: ProgramGrid + FigureEditor + Viewport3D |
-
----
-
-## License
-
-See [LICENSE](LICENSE).

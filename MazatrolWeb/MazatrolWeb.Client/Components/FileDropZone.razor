@@ -1,13 +1,16 @@
 @namespace MazatrolWeb.Client.Components
+@inject MazatrolSessionState Session
+@implements IDisposable
 
 <div class="drop-zone">
-    <label class="btn btn-primary mb-0">
+    <label class="btn btn-primary mb-0 @(Session.IsLoading ? "disabled" : "")">
         Open Mazatrol program…
         <InputFile OnChange="OnFileSelected"
-                   accept=".pbg,.pbf,.pbd,.pbe,.pbm,.mzk,.t6m,.m6m,.maz"
-                   class="d-none" />
+                   accept=".pbg,.pbf,.pbd,.pbe,.pbm,.mzk,.t6m,.m6m,.maz,.html,.htm"
+                   class="d-none"
+                   disabled="@Session.IsLoading" />
     </label>
-    <span class="text-muted ms-2 small">Supported: .PBG, .PBF, .MZK, …</span>
+    <span class="text-muted ms-2 small">Supported: .PBG, .PBF, .HTML (export), …</span>
     @if (!string.IsNullOrEmpty(_fileName))
     {
         <span class="badge bg-secondary ms-2">@_fileName</span>
@@ -24,6 +27,10 @@
     private string? _fileName;
     private string? _error;
 
+    protected override void OnInitialized() => Session.OnChanged += StateHasChanged;
+
+    public void Dispose() => Session.OnChanged -= StateHasChanged;
+
     private async Task OnFileSelected(InputFileChangeEventArgs e)
     {
         _error = null;
@@ -36,11 +43,40 @@
             return;
         }
 
-        await using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
-        using var ms = new MemoryStream();
-        await stream.CopyToAsync(ms);
-        _fileName = file.Name;
-        await OnFileLoaded.InvokeAsync((ms.ToArray(), file.Name));
+        Session.BeginLoading("Reading file…");
+        try
+        {
+            await using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            using var ms = new MemoryStream();
+            var buffer = new byte[81920];
+            var totalBytes = file.Size > 0 ? file.Size : (long?)null;
+            long bytesRead = 0;
+
+            int count;
+            while ((count = await stream.ReadAsync(buffer)) > 0)
+            {
+                ms.Write(buffer, 0, count);
+                bytesRead += count;
+                if (totalBytes is > 0)
+                {
+                    var percent = (int)(bytesRead * 30 / totalBytes.Value);
+                    Session.SetLoadingProgress(percent, "Reading file…");
+                }
+                else
+                {
+                    Session.SetLoadingProgress(15, "Reading file…");
+                }
+            }
+
+            _fileName = file.Name;
+            Session.SetLoadingProgress(35, "Opening program…");
+            await OnFileLoaded.InvokeAsync((ms.ToArray(), file.Name));
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            Session.EndLoading();
+        }
     }
 }
 

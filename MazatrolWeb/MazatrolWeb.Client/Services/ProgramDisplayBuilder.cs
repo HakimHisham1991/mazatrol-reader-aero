@@ -131,6 +131,8 @@ public sealed partial class ProgramBlock
         ParameterType.ReadFullNumber1B => "readFullNumber1B",
         ParameterType.ReadLetter => "readLetter",
         ParameterType.ReadPattern => "readPattern",
+        ParameterType.ReadPbdTool => "readPbdTool",
+        ParameterType.ReadPbdMultiFlag => "readPbdMultiFlag",
         ParameterType.PartType => "partType",
         _ => "UNKNOWN"
     };

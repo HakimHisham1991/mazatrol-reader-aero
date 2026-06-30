@@ -12,7 +12,7 @@ dotnet restore
 dotnet run
 ```
 
-Open the URL shown (e.g. `http://localhost:5101`) → **Viewer** → open a `.PBG` file → **Play**.
+Open the URL shown (e.g. `http://localhost:5101`) → **Viewer** → open a `.PBG`, `.PBF`, or `.PBD` file (or `.HTML` Mazatrol export from `SAMPLE_NC_PROGRAM/PBF/` or `SAMPLE_NC_PROGRAM/PBD/`) → **Play**.
 
 ## Prerequisites
 
@@ -54,7 +54,9 @@ dotnet serve --directory ./publish/wwwroot
 | `Services/MazatrolParser.cs` | Binary `.PBG` parser |
 | `Services/TurningSimulation.cs` | Profile extraction + mesh DTO |
 | `wwwroot/js/three-scene.js` | Three.js lathe rendering |
-| `wwwroot/data/qts200m.xml` | Structure definitions |
+| `wwwroot/data/qts200m.xml` | PBG / turning structure definitions |
+| `wwwroot/data/pbf_structure.xml` | PBF / Matrix milling structure definitions |
+| `wwwroot/data/pbd_structure.xml` | PBD / Matrix contour milling structure definitions |
 
 ## Architecture
 

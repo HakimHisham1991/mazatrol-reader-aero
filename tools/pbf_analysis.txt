@@ -1,0 +1,32 @@
+﻿UNIT TYPES: 14
+
+=== BAR (69 in 6 files) ===
+  HDR: UNo. UNIT PART CPT-X CPT-Z FIN-X FIN-Z
+  SUB: FIG PTN S-CNR SPT-X SPT-Z FPT-X FPT-Z F-CNR/$ R/th RGH
+  SUB: SNo. TOOL NOM. No. PAT. DEP-1 DEP-2/NUM. DEP-3 FIN-X FIN-Z C-SP FR M M M
+
+=== CBN (2 in 2 files) ===
+  HDR: UNo. MAT. OD-MAX ID-MIN LENGTH WORK FACE ATC MODE RPM
+
+=== DRILLING (17 in 5 files) ===
+  HDR: UNo. UNIT MODE POS-C DIA DEPTH CHMF
+  SUB: FIG PTN SPT-R/x SPT-C/y SPT-Z NUM. ANG Q R
+python : Traceback (most recent call last):
+At C:\Users\hakim.hisham\AppData\Local\Temp\ps-script-2eec38b8-eda6-4277-945e-aa998e9ccce7.ps1:93 char:75
++ ... \mazatrol-reader-aero"; python tools/analyze_pbf_html.py 2>&1 | Out-F ...
++                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "C:\Users\Public\Documents\mazatrol-reader-aero\mazatrol-reader-aero\tools\analyze_pbf_html.py", line 91, in 
+<module>
+    main()
+    ~~~~^^
+  File "C:\Users\Public\Documents\mazatrol-reader-aero\mazatrol-reader-aero\tools\analyze_pbf_html.py", line 87, in 
+main
+    print(f"  SUB: {sub[:120]}")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\ufffd' in position 21: character maps to <undefined>

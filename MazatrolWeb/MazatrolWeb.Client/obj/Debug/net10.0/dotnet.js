@@ -5,7 +5,7 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
   "mainAssemblyName": "MazatrolWeb.Client",
   "applicationEnvironment": "Production",
   "resources": {
-    "hash": "sha256-mBAGgjkeDpnupZIRMb7pWrLri8EqYE9M07j1IAPglkM=",
+    "hash": "sha256-KX2D5Ix2ouducK6JZSU8IMh/GGWev+aKM/qr3ZwdjZo=",
     "jsModuleNative": [
       {
         "name": "dotnet.native.ikrs475e5v.js"
@@ -1242,16 +1242,16 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
       },
       {
         "virtualPath": "MazatrolWeb.Client.wasm",
-        "name": "MazatrolWeb.Client.vxw19s80kp.wasm",
-        "hash": "sha256-/YmtGcByFoLBbT8y2RaJDNgKLyBARXUSPW3E4cCqids=",
+        "name": "MazatrolWeb.Client.48vng0ksm6.wasm",
+        "hash": "sha256-LLIq6KDPbJCLL0MorsGZv18++a7iZVLzI1Rz3fgZ8Fo=",
         "cache": "force-cache"
       }
     ],
     "pdb": [
       {
         "virtualPath": "MazatrolWeb.Client.pdb",
-        "name": "MazatrolWeb.Client.w0wiq3ud88.pdb",
-        "hash": "sha256-YCdzxomLGFq7VsMrVbaFyCwywXpKFZJIO9vRagKk3iU=",
+        "name": "MazatrolWeb.Client.zgfsegn7n7.pdb",
+        "hash": "sha256-rYSZ/wtBv7fGkeUcKoiAbJ5/CF+9fd0ljGKn9VIpHSY=",
         "cache": "force-cache"
       }
     ],

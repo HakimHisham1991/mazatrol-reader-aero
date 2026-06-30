@@ -1,0 +1,66 @@
+@inject MazatrolSessionState Session
+@implements IDisposable
+
+@if (Session.IsLoading)
+{
+    <div class="loading-overlay" aria-live="polite" aria-busy="true">
+        <div class="loading-card">
+            <div class="loading-title">@Session.LoadingMessage</div>
+            <div class="progress loading-progress" role="progressbar"
+                 aria-valuenow="@Session.LoadingPercent"
+                 aria-valuemin="0"
+                 aria-valuemax="100">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-info"
+                     style="width: @(Session.LoadingPercent)%"></div>
+            </div>
+            <div class="loading-percent">@Session.LoadingPercent%</div>
+        </div>
+    </div>
+}
+
+@code {
+    protected override void OnInitialized() => Session.OnChanged += StateHasChanged;
+
+    public void Dispose() => Session.OnChanged -= StateHasChanged;
+}
+
+<style>
+    .loading-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(2px);
+    }
+
+    .loading-card {
+        min-width: min(420px, 90vw);
+        padding: 1.25rem 1.5rem;
+        border-radius: 8px;
+        background: #1a1a28;
+        border: 1px solid #444;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+    }
+
+    .loading-title {
+        margin-bottom: 0.75rem;
+        color: #f0f0f0;
+        font-size: 0.95rem;
+    }
+
+    .loading-progress {
+        height: 1.1rem;
+        background: #2a2a3a;
+    }
+
+    .loading-percent {
+        margin-top: 0.5rem;
+        text-align: right;
+        color: #aaa;
+        font-size: 0.8rem;
+        font-variant-numeric: tabular-nums;
+    }
+</style>

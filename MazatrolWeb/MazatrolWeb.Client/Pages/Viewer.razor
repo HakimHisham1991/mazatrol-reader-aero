@@ -8,9 +8,19 @@
 
 <AppPageHeader Title="Mazatrol Program Viewer" />
 
+<LoadingOverlay />
+
 <FileDropZone OnFileLoaded="LoadFile" />
 
-<div class="viewer-split mt-2">
+<div class="d-flex justify-content-end mb-2">
+    <button type="button"
+            class="btn btn-sm @(_show3DPanel ? "btn-outline-warning" : "btn-outline-secondary")"
+            @onclick="Toggle3DPanel">
+        @(_show3DPanel ? "Hide 3D panel" : "Show 3D panel")
+    </button>
+</div>
+
+<div class="viewer-split mt-2 @(_show3DPanel ? "" : "viewer-split-full")">
     <div class="viewer-pane viewer-pane-left">
         <div class="panel-dark p-2 rounded text-light program-pane">
             <ProgramGrid OnSelected="OnBlockSelected" />
@@ -19,14 +29,17 @@
             <FigureEditor Block="_selectedBlock" OnChanged="OnProgramChanged" />
         </div>
     </div>
-    <div class="viewer-pane viewer-pane-right">
-        <div class="panel-dark p-2 rounded h-100 text-light viewport-pane">
-            <Viewport3D @ref="_viewport"
-                          Wireframe="Session.WireframeEnabled"
-                          WireframeChanged="OnWireframeChanged"
-                          OnSimulate="Simulate" />
+    @if (_show3DPanel)
+    {
+        <div class="viewer-pane viewer-pane-right">
+            <div class="panel-dark p-2 rounded h-100 text-light viewport-pane">
+                <Viewport3D @ref="_viewport"
+                              Wireframe="Session.WireframeEnabled"
+                              WireframeChanged="OnWireframeChanged"
+                              OnSimulate="Simulate" />
+            </div>
         </div>
-    </div>
+    }
 </div>
 
 @if (!string.IsNullOrEmpty(_message))
@@ -38,10 +51,18 @@
     private Viewport3D? _viewport;
     private ProgramBlock? _selectedBlock;
     private string? _message;
+    private bool _show3DPanel;
 
     protected override void OnInitialized()
     {
         Session.OnChanged += StateHasChanged;
+    }
+
+    private async Task Toggle3DPanel()
+    {
+        _show3DPanel = !_show3DPanel;
+        if (_show3DPanel && Session.HasFile)
+            await Simulate();
     }
 
     private async Task LoadFile((byte[] Data, string FileName) args)
@@ -50,6 +71,7 @@
         try
         {
             await AppService.LoadProgramAsync(args.Data, args.FileName);
+            Session.SetLoadingProgress(100, "Complete");
             _selectedBlock = Session.SelectedBlock ?? Session.Blocks.FirstOrDefault(b => !string.IsNullOrEmpty(b.UnitName));
             if (_selectedBlock is not null)
                 Session.SelectBlock(_selectedBlock.Id);
@@ -59,6 +81,10 @@
         catch (Exception ex)
         {
             _message = ex.Message;
+        }
+        finally
+        {
+            Session.EndLoading();
         }
     }
 
@@ -120,6 +146,11 @@
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
+    }
+
+    .viewer-split-full .viewer-pane-left {
+        flex: 1 1 100%;
+        max-width: 100%;
     }
 
     .viewer-pane-right {

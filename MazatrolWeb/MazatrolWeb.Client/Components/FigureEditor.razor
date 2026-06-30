@@ -14,7 +14,11 @@ else
         <div class="d-flex justify-content-between align-items-center mb-2">
             <h6 class="mb-0">
                 @Block.UnitName
-                <span class="text-muted">0x@(Block.UnitAddress.ToString("X"))</span>
+                @if (Block.UnitNumber > 0)
+                {
+                    <span>#@Block.UnitNumber</span>
+                }
+                <span class="text-muted figure-offset" title="Byte offset in the program file">0x@(Block.UnitAddress.ToString("X"))</span>
             </h6>
             <div class="btn-group btn-group-sm">
                 <button class="btn btn-outline-danger" @onclick="() => Edit(UnitEditAction.Delete)">Delete</button>
@@ -53,7 +57,7 @@ else
                             }
                             else
                             {
-                                <span class="text-muted">@param.DisplayValue</span>
+                                <span class="param-value-readonly">@param.DisplayValue</span>
                             }
                         </td>
                         <td class="text-muted small">@param.ParamType</td>

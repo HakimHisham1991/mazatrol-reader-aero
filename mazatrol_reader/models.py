@@ -16,6 +16,8 @@ class ParameterType(str, Enum):
     READ_FULL_NUMBER_1B = "readFullNumber1B"
     READ_LETTER = "readLetter"
     READ_PATTERN = "readPattern"
+    READ_PBD_TOOL = "readPbdTool"
+    READ_PBD_MULTI_FLAG = "readPbdMultiFlag"
     PART_TYPE = "partType"
     UNKNOWN = "UNKNOWN"
 
@@ -57,6 +59,18 @@ class ParameterValue:
     value: Any
     file_offset: int
     param_type: ParameterType | str
+    is_defined: bool = True
+
+    @property
+    def display_value(self) -> str:
+        from mazatrol_reader.parameter_formatter import format_display_value
+
+        param_type = (
+            self.param_type
+            if isinstance(self.param_type, ParameterType)
+            else ParameterType(str(self.param_type))
+        )
+        return format_display_value(self.value, param_type, self.is_defined)
 
 
 @dataclass
@@ -86,7 +100,7 @@ class ProgramBlock:
             rows.append([self.unit_name, self.unit_number, self.unit_address + 2, ""])
 
         for param in self.parameters:
-            rows.append([param.name, param.value, param.file_offset, param.param_type])
+            rows.append([param.name, param.display_value, param.file_offset, param.param_type])
 
         while len(rows) < 17:
             rows.append(["", "", "", ""])

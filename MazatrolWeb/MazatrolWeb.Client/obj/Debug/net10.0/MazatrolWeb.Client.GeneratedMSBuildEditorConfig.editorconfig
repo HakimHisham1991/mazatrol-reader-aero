@@ -37,12 +37,12 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBcHBQYWdlSGVhZGVyLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Public/Documents/mazatrol-reader-aero/mazatrol-reader-aero/MazatrolWeb/MazatrolWeb.Client/Components/FigureEditor.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xGaWd1cmVFZGl0b3IucmF6b3I=
-build_metadata.AdditionalFiles.CssScope = 
-
 [C:/Users/Public/Documents/mazatrol-reader-aero/mazatrol-reader-aero/MazatrolWeb/MazatrolWeb.Client/Components/FileDropZone.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xGaWxlRHJvcFpvbmUucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Public/Documents/mazatrol-reader-aero/mazatrol-reader-aero/MazatrolWeb/MazatrolWeb.Client/Components/LoadingOverlay.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMb2FkaW5nT3ZlcmxheS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/Public/Documents/mazatrol-reader-aero/mazatrol-reader-aero/MazatrolWeb/MazatrolWeb.Client/Components/ProgramGrid.razor]
@@ -80,6 +80,10 @@ build_metadata.AdditionalFiles.CssScope =
 [C:/Users/Public/Documents/mazatrol-reader-aero/mazatrol-reader-aero/MazatrolWeb/MazatrolWeb.Client/_Imports.razor]
 build_metadata.AdditionalFiles.TargetPath = X0ltcG9ydHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Public/Documents/mazatrol-reader-aero/mazatrol-reader-aero/MazatrolWeb/MazatrolWeb.Client/Components/FigureEditor.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xGaWd1cmVFZGl0b3IucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = b-lncbuk5wv3
 
 [C:/Users/Public/Documents/mazatrol-reader-aero/mazatrol-reader-aero/MazatrolWeb/MazatrolWeb.Client/Layout/MainLayout.razor]
 build_metadata.AdditionalFiles.TargetPath = TGF5b3V0XE1haW5MYXlvdXQucmF6b3I=

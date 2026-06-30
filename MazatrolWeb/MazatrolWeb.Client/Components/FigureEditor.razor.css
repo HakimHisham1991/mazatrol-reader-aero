@@ -1,0 +1,27 @@
+.figure-editor {
+    font-size: 0.8em;
+}
+
+.figure-editor h6 {
+    font-size: 1em;
+}
+
+.figure-editor .figure-offset {
+    font-size: 0.85em;
+    font-weight: normal;
+}
+
+.figure-editor .table {
+    font-size: 1em;
+}
+
+.figure-editor .form-control-sm {
+    font-size: 1em;
+    color: #fff;
+    background-color: #2a2a3a;
+    border-color: #555;
+}
+
+.figure-editor .param-value-readonly {
+    color: #fff;
+}
