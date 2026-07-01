@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MazatrolWeb.Client")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("2.1.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("2.1.0+6ac5f32ac9c6d46ec13ef6f974618606d342c3db")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("2.1.0+1bd17d750c3ce904b76f9155fdfeb62beb305cc9")]
 [assembly: System.Reflection.AssemblyProductAttribute("MazatrolWeb.Client")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MazatrolWeb.Client")]
 [assembly: System.Reflection.AssemblyVersionAttribute("2.1.0.0")]

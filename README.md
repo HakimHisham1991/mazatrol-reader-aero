@@ -30,7 +30,29 @@ Parses binary Mazatrol files using structure definitions in `wwwroot/data/pbg_st
 
 `.pbg` `.pbf` `.pbd` `.pbe` `.pbm` `.mzk` `.t6m` `.m6m` `.maz` `.html` `.htm`
 
-Sample programs (when present locally):
+### Mazatrol Extensions Reference
+
+| Extension              | Typical Use / Control Association |
+|------------------------|-----------------------------------|
+| **.PBF**               | Common on Matrix / Nexus / newer lathes (turning programs) |
+| **.PBD**               | Common on Matrix / Nexus (often turning or specific data) |
+| **.PBE**               | Seen alongside PBF/PBD (various Mazatrol generations) |
+| **.PBM**               | Mentioned in backups (possibly related to PBF series) |
+| **.PB***               | General wildcard for PB-series files (PBF, PBD, etc.) on many controls |
+| **.T6M**               | Older T-series / T-Plus lathe controls |
+| **.M6M**               | Milling / M-series controls |
+| **.CM1, .CM2, .CM3, .CM4** | Older controls (e.g., M32, T32, Fusion 640 era) |
+| **.MAZ**               | Newer controls (Matrix and later); often used for internal Windows HD storage and backups |
+| **.M6P**               | Fusion 640M / M-Plus (milling programs) |
+
+**Additional Notes**
+- Older controls (T1/T2/T3, M2, Fusion 640, etc.) often use formats like `.T6M`, `.M6M`, or `CMx`.
+- Matrix / Smooth series commonly use `.PBF` / `.PBD` / `.PBE` and `.MAZ`.
+- Some software (e.g., MazView) supports a broad range including `PB*`, Camware, RWT, and tape formats.
+- EIA/ISO programs (G-code) usually use `.EIA`, `.NC`, or similar text extensions — these are **not** Mazatrol conversational programs.
+- Other formats occasionally mentioned: `.BIN` (for CMT transfers), text exports like `.PAF` and `.PAD` (when "TEXT FORMAT" is selected).
+
+**Sample programs (when present locally):**
 
 ```
 SAMPLE_NC_PROGRAM/PBF/     HTML Mazatrol exports

@@ -18,7 +18,7 @@ Older controls (T1/T2/T3, M2, Fusion 640, etc.) often use formats like .T6M, .M6
 Matrix / Smooth series commonly use .PBF / .PBD / .PBE and .MAZ.
 Some software (e.g., MazView) supports a broad range including PB*, Camware, RWT, and tape formats.
 EIA/ISO programs (G-code) usually use .EIA, .NC, or similar text extensions — these are not Mazatrol conversational programs.
-Other formats occasionally mentioned: .BIN (for CMT transfers), text exports like .PAF (when "TEXT FORMAT" is selected).
+Other formats occasionally mentioned: .BIN (for CMT transfers), text exports like .PAF and .PAD (when "TEXT FORMAT" is selected).
 
 
 
